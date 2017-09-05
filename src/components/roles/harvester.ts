@@ -1,26 +1,26 @@
-import {CreepPopulation, CreepRole, CreepFactory, BaseRole} from './role';
+import { BaseRole, CreepFactory, CreepPopulation, CreepRole } from './role';
 
 export const factory: CreepFactory = new class {
-  name = 'harvester';
-  bodyTemplate = [MOVE, WORK, CARRY];
+  public name = 'harvester';
+  public  bodyTemplate = [MOVE, WORK, CARRY];
 
-  create(creep: Creep): CreepRole {
+  public create(creep: Creep): CreepRole {
     return new Harvester(creep);
   }
 
-  targetPopulation(room: Room, pop: CreepPopulation): number {
+  public targetPopulation(room: Room, _pop: CreepPopulation): number {
     if (!room.memory.sourceSpots) {
       room.memory.sourceSpots = getSourceSpots(room);
     }
     return room.memory.sourceSpots || 1;
   }
-};
+}();
 
 export class Harvester extends BaseRole {
   public run(): void {
     const creep = this.creep;
 
-    if ((creep.carry[RESOURCE_ENERGY] || 0) >= creep.carryCapacity) {
+    if ((creep.carry.energy || 0) >= creep.carryCapacity) {
       return;
     }
 
@@ -36,21 +36,28 @@ export class Harvester extends BaseRole {
 
     let result = creep.harvest(target);
     if (result === ERR_NOT_IN_RANGE) {
-        result = creep.moveTo(target);
+      result = creep.moveTo(target);
     }
-    mem.target = (result === OK) ? target.id : undefined;
+    mem.target = result === OK ? target.id : undefined;
   }
 }
 
 function getSourceSpots(room: Room): number {
   let count = 0;
   _.each(room.find<Source>(FIND_SOURCES), (s: Source) => {
-      const terrains = room.lookForAtArea(LOOK_TERRAIN, s.pos.y - 1, s.pos.x - 1, s.pos.y + 1, s.pos.x + 1, true);
-      _.each(terrains, t => {
-          if (t.terrain === 'swamp' || t.terrain === 'plain') {
-              count++;
-          }
-      });
+    const terrains = room.lookForAtArea(
+      LOOK_TERRAIN,
+      s.pos.y - 1,
+      s.pos.x - 1,
+      s.pos.y + 1,
+      s.pos.x + 1,
+      true
+    );
+    _.each(terrains, (t: LookAtResult) => {
+      if (t.terrain === 'swamp' || t.terrain === 'plain') {
+        count++;
+      }
+    });
   });
   return count;
 }

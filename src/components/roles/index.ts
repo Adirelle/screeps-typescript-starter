@@ -1,4 +1,9 @@
-export { CreepRole, CreepPopulation, CreepRoleRegistry, CreepFactory } from './role';
+export {
+  CreepRole,
+  CreepPopulation,
+  CreepRoleRegistry,
+  CreepFactory
+} from './role';
 
 import { factory as hFactory } from './harvester';
 import { factory as mFactory } from './mule';

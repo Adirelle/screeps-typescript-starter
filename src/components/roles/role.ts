@@ -1,18 +1,15 @@
-
 export interface CreepPopulation {
-  [role: string]: number
-};
+  [role: string]: number;
+}
 
 export interface CreepRole {
   run(): void;
 }
 
 export abstract class BaseRole implements CreepRole {
-  constructor(
-    public readonly creep: Creep,
-  ) {};
+  constructor(public readonly creep: Creep) {}
 
-  abstract run(): void;
+  public abstract run(): void;
 }
 
 export interface CreepFactory {
@@ -25,9 +22,7 @@ export interface CreepFactory {
 }
 
 export class CreepRoleRegistry {
-  constructor(
-    private readonly factories: { [name: string]: CreepFactory }
-  ) {}
+  constructor(private readonly factories: { [name: string]: CreepFactory }) {}
 
   public factory(role: string): CreepFactory {
     return this.factories[role];
