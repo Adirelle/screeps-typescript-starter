@@ -1,4 +1,4 @@
-import { LogLevels } from "../lib/logger/logLevels";
+import { LogLevels } from '../lib/logger/logLevels';
 
 /**
  * Enable this if you want a lot of text to be logged to console.
@@ -9,7 +9,7 @@ export const ENABLE_DEBUG_MODE: boolean = true;
 /**
  * Enable this to enable screeps profiler
  */
-export const USE_PROFILER: boolean = true;
+export const USE_PROFILER: boolean = false;
 
 /**
  * Minimum number of ticksToLive for a Creep before they go to renew.
@@ -47,7 +47,7 @@ export const LOG_MAX_PAD: number = 100;
  * Repo and revision are filled in at build time for git repositories.
  */
 // export const LOG_VSC = { repo: "@@_repo_@@", revision: "@@_revision_@@", valid: false };
-export const LOG_VSC = { repo: "@@_repo_@@", revision: __REVISION__, valid: false };
+export const LOG_VSC = { repo: '@@_repo_@@', revision: __REVISION__, valid: false };
 
 /**
  * URL template for VSC links, this one works for github and gitlab.

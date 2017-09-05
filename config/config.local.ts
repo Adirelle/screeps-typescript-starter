@@ -1,7 +1,7 @@
-import * as Config from "webpack-chain";
+import * as Config from 'webpack-chain';
 
-import * as CommonConfig from "./config.common";
-import { EnvOptions } from "./types";
+import * as CommonConfig from './config.common';
+import { EnvOptions } from './types';
 
 function webpackConfig(options: EnvOptions = {}): Config {
   // get the common configuration to start with
@@ -15,13 +15,13 @@ function webpackConfig(options: EnvOptions = {}): Config {
   config.output.path(localPath);
 
   // modify the args of "define" plugin
-  config.plugin("define").tap((args: any[]) => {
+  config.plugin('define').tap((args: any[]) => {
     args[0].PRODUCTION = JSON.stringify(false);
     return args;
   });
 
   // HACK to add .js extension for local server
-  config.output.sourceMapFilename("[file].map.js");
+  config.output.sourceMapFilename('[file].map.js');
 
   return config;
 }
