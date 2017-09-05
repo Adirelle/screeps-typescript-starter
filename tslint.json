@@ -7,6 +7,8 @@
     "interface-name": [false],
     "no-console": [false],
     "no-namespace": [true, "allow-declarations"],
+    "object-literal-key-quotes": [true, "consistent-as-needed"],
+    "quotemark": [true, "single", "avoid-template", "avoid-escape"],
     "trailing-comma": [
       true,
       "never"
