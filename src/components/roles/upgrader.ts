@@ -1,16 +1,16 @@
 import { log } from '../../lib/logger/log';
-import { BaseRole, CreepFactory, CreepPopulation, CreepRole } from './role';
+import { BaseRole, Factory, Population, Role } from './role';
 
-export const factory: CreepFactory = new class {
+export const factory: Factory = new class {
   public name = 'upgrader';
   public bodyTemplate = [MOVE, WORK, CARRY];
   public dependsOn = { mule: 0.5 };
 
-  public create(creep: Creep): CreepRole {
+  public create(creep: Creep): Role {
     return new Upgrader(creep);
   }
 
-  public targetPopulation(room: Room, _pop: CreepPopulation): number {
+  public targetPopulation(room: Room, _pop: Population): number {
     if (!room.controller) {
       return 0;
     }

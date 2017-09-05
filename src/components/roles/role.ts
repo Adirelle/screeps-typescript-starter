@@ -1,39 +1,39 @@
-export interface CreepPopulation {
+export interface Population {
   [role: string]: number;
 }
 
-export interface CreepRole {
+export interface Role {
   run(): void;
 }
 
-export abstract class BaseRole implements CreepRole {
+export abstract class BaseRole implements Role {
   constructor(public readonly creep: Creep) {}
 
   public abstract run(): void;
 }
 
-export interface CreepFactory {
+export interface Factory {
   readonly name: string;
   readonly bodyTemplate: string[];
-  readonly dependsOn?: CreepPopulation;
+  readonly dependsOn?: Population;
 
-  create(creep: Creep): CreepRole;
-  targetPopulation(room: Room, pop: CreepPopulation): number;
+  create(creep: Creep): Role;
+  targetPopulation(room: Room, pop: Population): number;
 }
 
-export class CreepRoleRegistry {
-  constructor(private readonly factories: { [name: string]: CreepFactory }) {}
+export class Registry {
+  constructor(public readonly factories: { [name: string]: Factory }) {}
 
-  public factory(role: string): CreepFactory {
+  public factory(role: string): Factory {
     return this.factories[role];
   }
 
-  public spawn(creep: Creep, roleName: string): CreepRole {
+  public spawn(creep: Creep, roleName: string): Role {
     creep.memory.role = roleName;
-    return this.factory(roleName).create(creep);
+    return this.factories[roleName].create(creep);
   }
 
-  public reload(creep: Creep): CreepRole {
-    return this.factory(creep.memory.role).create(creep);
+  public reload(creep: Creep): Role {
+    return this.factories[creep.memory.role].create(creep);
   }
 }

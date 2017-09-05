@@ -1,15 +1,15 @@
-import { BaseRole, CreepFactory, CreepPopulation, CreepRole } from './role';
+import { BaseRole, Factory, Population, Role } from './role';
 
-export const factory: CreepFactory = new class {
+export const factory: Factory = new class {
   public name = 'mule';
   public bodyTemplate = [MOVE, CARRY];
   public dependsOn = { harvester: 2 };
 
-  public create(creep: Creep): CreepRole {
+  public create(creep: Creep): Role {
     return new Mule(creep);
   }
 
-  public targetPopulation(_room: Room, pop: CreepPopulation): number {
+  public targetPopulation(_room: Room, pop: Population): number {
     return Math.max(1, pop.harvester * 2);
   }
 }();

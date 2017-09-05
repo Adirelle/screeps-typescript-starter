@@ -1,16 +1,17 @@
 export {
-  CreepRole,
-  CreepPopulation,
-  CreepRoleRegistry,
-  CreepFactory
+  Role,
+  Population,
+  Factory
 } from './role';
 
-import { factory as hFactory } from './harvester';
-import { factory as mFactory } from './mule';
-import { factory as uFactory } from './upgrader';
+import { Registry } from './role';
 
-export const roles = new CreepRoleRegistry({
-  harvester: hFactory,
-  mule: mFactory,
-  upgrader: uFactory
+import * as Harvester from './harvester';
+import * as Mule from './mule';
+import * as Upgrader from './upgrader';
+
+export const registry = new Registry({
+  harvester: Harvester.factory,
+  mule: Mule.factory,
+  upgrader: Upgrader.factory
 });
