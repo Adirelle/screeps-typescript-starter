@@ -1,3 +1,19 @@
+import {CreepPopulation, CreepRole, CreepFactory, BaseRole} from './role';
+
+export const factory: CreepFactory = new class {
+  name = 'mule';
+  bodyTemplate = [MOVE, CARRY];
+  dependsOn =  { harvester: 2 };
+
+  create(creep: Creep): CreepRole {
+    return new Mule(creep);
+  }
+
+  targetPopulation(room: Room, pop: CreepPopulation): number {
+    return Math.max(1, pop.harvester * 2);
+  }
+};
+
 interface EnergizedStructure extends Structure {
   energy: number;
   energyCapacity: number;
@@ -5,17 +21,10 @@ interface EnergizedStructure extends Structure {
 
 type MuleTarget = Creep|EnergizedStructure;
 
-export class Mule {
-  public name = 'mule';
-  public bodyTemplate = [CARRY, MOVE];
+export class Mule extends BaseRole {
 
-  public dependsOn = { harvester: 2 };
-
-  public targetPopulation(room: Room, pop: { [role: string]: number }): number {
-    return Math.max(1, pop.harvester * 2);
-  }
-
-  public run(creep: Creep): void {
+  public run(): void {
+    const creep = this.creep;
     const mem = creep.memory;
     const blacklist: MuleTarget[]= [];
     let target: MuleTarget|null = mem.target && Game.getObjectById<MuleTarget>(mem.target);

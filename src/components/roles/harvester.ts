@@ -1,16 +1,25 @@
+import {CreepPopulation, CreepRole, CreepFactory, BaseRole} from './role';
 
-export class Harvester {
-  public name = 'harvester';
-  public bodyTemplate = [MOVE, WORK, CARRY];
+export const factory: CreepFactory = new class {
+  name = 'harvester';
+  bodyTemplate = [MOVE, WORK, CARRY];
 
-  public targetPopoultation(room: Room): number {
+  create(creep: Creep): CreepRole {
+    return new Harvester(creep);
+  }
+
+  targetPopulation(room: Room, pop: CreepPopulation): number {
     if (!room.memory.sourceSpots) {
       room.memory.sourceSpots = getSourceSpots(room);
     }
     return room.memory.sourceSpots || 1;
   }
+};
 
-  public run(creep: Creep): void {
+export class Harvester extends BaseRole {
+  public run(): void {
+    const creep = this.creep;
+
     if ((creep.carry[RESOURCE_ENERGY] || 0) >= creep.carryCapacity) {
       return;
     }
