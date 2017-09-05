@@ -82,12 +82,9 @@ export class Mule extends BaseRole {
   }
 }
 
-function findHarvesterToEmpty(
-  creep: Creep,
-  blacklist: MuleTarget[]
-): Creep | null {
+function findHarvesterToEmpty(creep: Creep, blacklist: MuleTarget[]): Creep | null {
   const allH = creep.room.find<Creep>(FIND_MY_CREEPS, {
-    filter: (c: Creep) => c.memory.role === 'harverstr'
+    filter: (c: Creep) => c.memory.role === 'harverster'
   });
   const harvesters: Creep[] = _.difference(
     allH,
