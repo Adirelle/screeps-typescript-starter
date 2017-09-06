@@ -2,7 +2,7 @@ import { BaseRole, Factory, Population, Role } from './role';
 
 export const factory: Factory = new class {
   public name = 'harvester';
-  public  bodyTemplate = [MOVE, WORK, CARRY];
+  public bodyTemplate = [MOVE, WORK, CARRY];
 
   public create(creep: Creep): Role {
     return new Harvester(creep);
