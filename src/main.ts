@@ -36,7 +36,7 @@ function runCreep(creep: Creep): void {
   }
 }
 
-type BodyDef = string[];
+type BodyDef = BodyPartType[];
 
 interface SpawnInfo {
   spawn: StructureSpawn;
@@ -130,7 +130,7 @@ function biggestBody(room: Room, bodyTpl: BodyDef): SpawnInfo|null {
 
 function repeatBody(tpl: BodyDef, size: number) {
   const body: BodyDef = [];
-  _.each(tpl, (part: string) => {
+  _.each(tpl, (part) => {
     for (let j = 0; j < size; j++) {
       body.push(part);
     }

@@ -14,7 +14,7 @@ export abstract class BaseRole implements Role {
 
 export interface Factory {
   readonly name: string;
-  readonly bodyTemplate: string[];
+  readonly bodyTemplate: BodyPartType[];
   readonly dependsOn?: Population;
 
   create(creep: Creep): Role;

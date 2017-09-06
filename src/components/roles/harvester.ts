@@ -44,7 +44,7 @@ export class Harvester extends BaseRole {
 
 function getSourceSpots(room: Room): number {
   let count = 0;
-  _.each(room.find<Source>(FIND_SOURCES), (s: Source) => {
+  _.each(room.find<Source>(FIND_SOURCES), (s) => {
     const terrains = room.lookForAtArea(
       LOOK_TERRAIN,
       s.pos.y - 1,
