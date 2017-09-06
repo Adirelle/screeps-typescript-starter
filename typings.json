@@ -2,6 +2,6 @@
   "name": "resir014-screeps",
   "dependencies": {},
   "globalDependencies": {
-    "screeps": "github:screepers/Screeps-Typescript-Declarations/dist/screeps.d.ts"
+    "screeps": "github:Adirelle/Screeps-Typescript-Declarations/dist/screeps.d.ts"
   }
 }
