@@ -5,9 +5,9 @@ class ManagerRegistry {
   public readonly type = 'registry';
   public readonly requiredBodyParts = [];
 
-  private managers: { [type: string]: Manager } = {};
+  private managers: { [type: string]: Manager<any> } = {};
 
-  public register(manager: Manager): void {
+  public register<T extends Task>(manager: Manager<T>): void {
     if (this.managers[manager.type]) {
       return;
     }
@@ -15,7 +15,7 @@ class ManagerRegistry {
     log.debug(`Registered ${manager.type} manager`);
   }
 
-  public manage(room: Room, enqueue: Enqueue): void {
+  public manage<T extends Task>(room: Room, enqueue: Enqueue<T>): void {
     _.each(this.managers, (manager) => manager.manage(room, enqueue));
   }
 
@@ -23,10 +23,10 @@ class ManagerRegistry {
     if (!creep.task || creep.spawning) {
       return;
     }
-    this.getManager(creep.task).run(creep);
+    this.getManager(creep.task).run(creep, creep.task);
   }
 
-  public getManager(task: Task|string): Manager {
+  public getManager(task: Task|string): Manager<any> {
     const type = typeof task === 'string' ? task : task.type;
     if (!this.managers[type]) {
       throw new Error(`Unknown task type ${type}`);
