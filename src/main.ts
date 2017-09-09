@@ -8,6 +8,7 @@ import { managers, Task } from './tasks';
 
 if (Config.USE_PROFILER) {
   Profiler.enable();
+  log.debug('Profiler enabled');
 }
 
 log.info('Scripts bootstrapped');
@@ -17,6 +18,7 @@ if (__REVISION__) {
 }
 
 function mloop(): void {
+  log.info(`=== Tick #${Game.time} ===`);
   cleanCreepMemory();
   _.each(Game.rooms, manageRoom);
   _.each(Game.creeps, (creep) => managers.run(creep));
@@ -39,19 +41,25 @@ function manageRoom(room: Room) {
 
 function collectTasks(room: Room): Task[] {
   const tasks: Task[] = [];
-  managers.manage(room, (t) => tasks.push(t));
+  managers.manage(room, (t: Task) => tasks.push(t));
   return tasks;
 }
 
-interface SpawnOrder {
-  task: Task;
-}
-
-function assignTasks(tasks: Task[], creeps: Creep[]): SpawnOrder[] {
-  const orders: SpawnOrder[] = [];
+function assignTasks(tasks: Task[], creeps: Creep[]): Task[] {
+  log.debug(`Assigning ${tasks.length} task(s) to ${creeps.length} creep(s)`);
+  if (!tasks) {
+    return [];
+  }
+  if (!creeps) {
+    return tasks;
+  }
   tasks.sort((a: Task, b: Task) => a.priority - b.priority);
-  _.each(tasks, (task) => {
-    let creep: Creep|undefined;
+  return _.filter(tasks, (task) => {
+    let creep: Creep|undefined = _.find(creeps, (c) => c.task && task.isSameAs(c.task));
+    if (creep) {
+      log.debug(`${task} already assigned to ${creep.name}`);
+      return false;
+    }
     if (task.pos) {
       creep = task.pos.findClosestByPath<Creep>(creeps, {filter: (c: Creep) => c.canAssign(task)});
     } else {
@@ -59,15 +67,38 @@ function assignTasks(tasks: Task[], creeps: Creep[]): SpawnOrder[] {
     }
     if (creep)  {
       creep.assign(task);
-    } else {
-      orders.push({task});
+      log.debug(`Assigned ${task} to ${creep}`);
+      return false;
     }
+    log.debug(`Need new creep for ${task}`);
+    return true;
   });
-  return orders;
 }
 
-function runSpawns(room: Room, orders: SpawnOrder[]): void {
-  const spawns = room.find<StructureSpawn>(FIND_MY_SPAWNS);
+function runSpawns(room: Room, orders: Task[]): void {
+  if (!orders) {
+    return;
+  }
+  const spawns = room.find<Spawn>(FIND_MY_SPAWNS, {filter: (spawn: Spawn) => !spawn.spawning});
+  for (const task of orders) {
+    const body = managers.getManager(task).requiredBodyParts;
+    const filter = (s: Spawn) => s.canCreateCreep(body) === OK;
+    let spawn;
+    if (task.pos) {
+      spawn = task.pos.findClosestByPath(spawns, {filter});
+    } else {
+      spawn = _.find(spawns, filter);
+    }
+    if (spawn) {
+      const result = spawn.createCreep(body);
+      if (typeof result === 'string') {
+        const creep = Game.getObjectById<Creep>(result);
+        creep!.task = task;
+        continue;
+      }
+    }
+    break;
+  }
 }
 
 /*
