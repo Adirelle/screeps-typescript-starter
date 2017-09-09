@@ -16,4 +16,8 @@ interface Creep {
   isEmpty(): boolean;
 }
 
+interface Room {
+  readonly creeps: Creep[];
+}
+
 declare const __REVISION__: string

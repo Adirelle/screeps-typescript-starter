@@ -1,6 +1,4 @@
 
-// Add properties to Creep
-
 Object.defineProperties(Creep.prototype, {
   energy: {
     configurable: true,
