@@ -1,6 +1,5 @@
 import './augmentation';
-import './harvest';
-import './idle';
+import './types';
 
 export { registry as managers } from './registry';
 export * from './task';

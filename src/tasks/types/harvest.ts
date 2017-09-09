@@ -1,22 +1,34 @@
-import { log } from '../lib/logger/log';
-import { registerSerializer, Serializer } from '../lib/serializer';
-import managers from './registry';
-import { Enqueue, Manager, Task } from './task';
+import { log } from '../../lib/logger/log';
+import { registerSerializer, Serializer } from '../../lib/serializer';
+import managers from '../registry';
+import { Enqueue, Manager, Task } from '../task';
 
 const HARVEST_TASK = 'harvest';
 
 class HarvestTask implements Task {
   public readonly type = HARVEST_TASK;
   public readonly priority = 0;
-  constructor(public source: Source, public pos: RoomPosition) {}
-  public toString() { return `harvest(${this.source.id},${this.pos.x},${this.pos.y})`; }
+
+  constructor(public source: Source, public pos: RoomPosition) {
+  }
+
+  public toString() {
+    return `harvest(${this.source.id},${this.pos.x},${this.pos.y})`;
+  }
+
+  public isSameAs(other: any): boolean {
+    return (other instanceof HarvestTask) &&
+      other.source.id === this.source.id &&
+      other.pos.x === this.pos.x &&
+      other.pos.y === this.pos.y;
+  }
 }
 
-class HarvestTaskManager implements Manager {
+class HarvestTaskManager implements Manager<HarvestTask> {
   public readonly type = HARVEST_TASK;
   public readonly requiredBodyParts = [WORK, CARRY, MOVE];
 
-  public manage(room: Room, enqueue: Enqueue) {
+  public manage(room: Room, enqueue: Enqueue<HarvestTask>) {
     const slots = this.findSourceSlots(room);
     _.each(slots, ({ x, y, sourceId }) => {
       const source = Game.getObjectById<Source>(sourceId);
@@ -35,8 +47,7 @@ class HarvestTaskManager implements Manager {
     });
   }
 
-  public run(creep: Creep) {
-    const { source, pos } = creep.task as HarvestTask;
+  public run(creep: Creep, {source, pos}: HarvestTask) {
     if (creep.pos.x !== pos.x || creep.pos.y !== pos.y) {
       creep.moveTo(pos);
     } else if (!creep.isFull()) {
