@@ -13,7 +13,7 @@ function webpackConfig(options: EnvOptions = {}): webpack.Configuration {
   _.defaults(options, {
     ENV: 'dev',
     ROOT: __dirname,
-    TEST: false,
+    TEST: false
   });
 
   const config: Config = require(`./config/config.${options.ENV}`)(options);
