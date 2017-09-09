@@ -1,11 +1,10 @@
-import { log } from '../lib/logger/log';
 import { serialize, unserialize } from '../lib/serializer';
 import { registry } from './registry';
 import { Task } from './task';
 
 declare global {
   interface Creep {
-    task?: Task;
+    task: Task|null;
     canAssign(task: Task): boolean;
     assign(task: Task): void;
     hasBodyParts(parts: BodyPartType[]): boolean;
@@ -16,19 +15,20 @@ declare global {
 
 Object.defineProperty(Creep.prototype, 'task', {
   configurable: true,
-  get(): Task|undefined {
-    if (!this._task) {
-      return this._task || undefined;
+  get(): Task|null {
+    if (this._task !== undefined) {
+      return this._task;
     }
     const unserialized = this.memory.task;
     if (typeof unserialized !== 'object' || !unserialized.type) {
+      delete this.memory.task;
       this._task = null;
-      return;
+      return null;
     }
     this._task = unserialize(unserialized);
     return this._task;
   },
-  set(task: Task|undefined) {
+  set(task: Task|null) {
     if (task === this._task) {
       return;
     }
@@ -42,7 +42,7 @@ Object.defineProperty(Creep.prototype, 'task', {
 });
 
 Creep.prototype.canAssign = function(this: Creep, task: Task): boolean {
-  return registry.isCompatible(this, task) && (!this.task || this.task.priority < task.priority);
+  return (!this.task || this.task.priority < task.priority) && registry.isCompatible(this, task);
 };
 
 Creep.prototype.assign = function(this: Creep, task: Task): void {
@@ -53,7 +53,6 @@ Creep.prototype.assign = function(this: Creep, task: Task): void {
 };
 
 Creep.prototype.hasBodyParts = function(this: Creep, parts: BodyPartType[]) {
-  _.each(this.body, ({type, hits}) => log.debug(type, hits));
   return _.all(parts, (part) => this.getActiveBodyparts(part) > 0);
 };
 
