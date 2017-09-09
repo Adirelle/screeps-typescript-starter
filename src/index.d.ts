@@ -6,8 +6,14 @@ declare namespace NodeJS {
 }
 
 interface Memory {
-  uuid: number;
   log: any;
+}
+
+interface Creep {
+  readonly energy: number;
+  readonly payload: number;
+  isFull(): boolean;
+  isEmpty(): boolean;
 }
 
 declare const __REVISION__: string
