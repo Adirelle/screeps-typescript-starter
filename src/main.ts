@@ -3,7 +3,8 @@ import * as Config from './config/config';
 import * as Profiler from 'screeps-profiler';
 import { log } from './lib/logger/log';
 
-import { Factory as RoleFactory, Population, registry as Roles } from './components/roles';
+import './augmentations';
+import { managers, Task } from './tasks';
 
 if (Config.USE_PROFILER) {
   Profiler.enable();
@@ -17,11 +18,11 @@ if (__REVISION__) {
 
 function mloop(): void {
   cleanCreepMemory();
-  _.each(Game.rooms, spawnCreeps);
-  _.each(Game.creeps, runCreep);
+  _.each(Game.rooms, manageRoom);
+  _.each(Game.creeps, (creep) => managers.run(creep));
 }
 
-function cleanCreepMemory(): void {
+function cleanCreepMemory() {
   for (const name in Memory.creeps) {
     if (!Game.creeps[name]) {
       Memory.creeps[name] = undefined;
@@ -29,13 +30,47 @@ function cleanCreepMemory(): void {
   }
 }
 
-function runCreep(creep: Creep): void {
-  if (!creep.spawning) {
-    const role = Roles.reload(creep);
-    role.run();
-  }
+function manageRoom(room: Room) {
+  const tasks = collectTasks(room);
+  const creeps = room.find<Creep>(FIND_MY_CREEPS);
+  const orders = assignTasks(tasks, creeps);
+  runSpawns(room, orders);
 }
 
+function collectTasks(room: Room): Task[] {
+  const tasks: Task[] = [];
+  managers.manage(room, (t) => tasks.push(t));
+  return tasks;
+}
+
+interface SpawnOrder {
+  task: Task;
+}
+
+function assignTasks(tasks: Task[], creeps: Creep[]): SpawnOrder[] {
+  const orders: SpawnOrder[] = [];
+  tasks.sort((a: Task, b: Task) => a.priority - b.priority);
+  _.each(tasks, (task) => {
+    let creep: Creep|undefined;
+    if (task.pos) {
+      creep = task.pos.findClosestByPath<Creep>(creeps, {filter: (c: Creep) => c.canAssign(task)});
+    } else {
+      creep = _.find(creeps, (c) => c.canAssign(task));
+    }
+    if (creep)  {
+      creep.assign(task);
+    } else {
+      orders.push({task});
+    }
+  });
+  return orders;
+}
+
+function runSpawns(room: Room, orders: SpawnOrder[]): void {
+  const spawns = room.find<StructureSpawn>(FIND_MY_SPAWNS);
+}
+
+/*
 type BodyDef = BodyPartType[];
 
 interface SpawnInfo {
@@ -137,6 +172,7 @@ function repeatBody(tpl: BodyDef, size: number) {
   });
   return body;
 }
+*/
 
 /**
  * Screeps system expects this "loop" method in main.js to run the
