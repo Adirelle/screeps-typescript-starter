@@ -7,6 +7,7 @@ const IDLE_TASK = 'idle';
 class IdleTask implements Task {
   public readonly type = IDLE_TASK;
   public readonly priority = -1e6;
+  public readonly pos = new RoomPosition(0, 0, 'neverland');
   public toString() { return IDLE_TASK; }
   public isSameAs(other: any) { return other instanceof IdleTask; }
 }
@@ -29,7 +30,7 @@ class IdleTaskManager implements Manager<IdleTask> {
 }
 
 interface SerializedIdleTask {readonly type: 'idle'; }
-const singleton = new IdleTask();
+export const idleSingleton = new IdleTask();
 const serializedSingleton: SerializedIdleTask = {type: 'idle'};
 
 class IdleTaskSerializer implements Serializer<IdleTask, SerializedIdleTask> {
@@ -39,7 +40,7 @@ class IdleTaskSerializer implements Serializer<IdleTask, SerializedIdleTask> {
     return serializedSingleton;
   }
   public unserialize(_s: SerializedIdleTask): IdleTask {
-    return singleton;
+    return idleSingleton;
   }
 }
 

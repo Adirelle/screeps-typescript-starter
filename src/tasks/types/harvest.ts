@@ -7,13 +7,13 @@ const HARVEST_TASK = 'harvest';
 
 class HarvestTask implements Task {
   public readonly type = HARVEST_TASK;
-  public readonly priority = 0;
+  public readonly priority = 1000;
 
   constructor(public source: Source, public pos: RoomPosition) {
   }
 
   public toString() {
-    return `harvest(${this.source.id},${this.pos.x},${this.pos.y})`;
+    return `harvest(${this.source.id},${this.pos})`;
   }
 
   public isSameAs(other: any): boolean {
@@ -31,32 +31,28 @@ class HarvestTaskManager implements Manager<HarvestTask> {
   public manage(room: Room, enqueue: Enqueue<HarvestTask>) {
     const slots = this.findSourceSlots(room);
     _.each(slots, ({ x, y, sourceId }) => {
-      const source = Game.getObjectById<Source>(sourceId);
-      if (!source) {
-        return;
-      }
-      const harvesters = _.filter(
-        room.lookForAt<Creep>(LOOK_CREEPS, x, y),
-        (creep) => creep.hasTask(HARVEST_TASK) && (creep.task! as HarvestTask).source === source
-      );
-      if (harvesters.length > 0) {
-        return;
-      }
+      const source = Game.getObjectById<Source>(sourceId) as Source;
       const pos = new RoomPosition(x, y, room.name);
       enqueue(new HarvestTask(source, pos));
     });
   }
 
   public run(creep: Creep, {source, pos}: HarvestTask) {
-    if (creep.pos.x !== pos.x || creep.pos.y !== pos.y) {
-      creep.moveTo(pos);
-    } else if (!creep.isFull()) {
-      creep.harvest(source);
+    if (creep.isFull()) {
+      creep.stopTask();
+      return;
+    }
+    let result = creep.harvest(source);
+    if (result === ERR_NOT_IN_RANGE) {
+      result = creep.moveTo(pos);
+    }
+    if (result !== OK && result !== ERR_TIRED) {
+      creep.stopTask();
     }
   }
 
-  public isCompatible(_creep: Creep) {
-    return true;
+  public isCompatible(creep: Creep) {
+    return creep.isEmpty();
   }
 
   private findSourceSlots(

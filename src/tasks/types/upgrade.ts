@@ -7,11 +7,13 @@ const UPGRADE_TASK = 'upgrade';
 class UpgradeTask implements Task {
   public readonly type = UPGRADE_TASK;
 
-  public constructor(public controller: Controller) {
-  }
+  public constructor(
+    public controller: Controller,
+    public priority: number
+  ) {}
 
-  public get priority(): number {
-    return Math.max(0, Math.ceil((5000 - this.controller.ticksToDowngrade) / 100));
+  public get pos() {
+    return this.controller.pos;
   }
 
   public toString() {
@@ -28,18 +30,29 @@ class UpgradeTaskManager implements Manager<UpgradeTask> {
   public readonly requiredBodyParts = [WORK, CARRY, MOVE];
 
   public manage(room: Room, enqueue: Enqueue<UpgradeTask>) {
-    if (room.controller) {
-      enqueue(new UpgradeTask(room.controller));
+    const ctrl = room.controller;
+    if (!ctrl) {
+      return;
+    }
+    if (ctrl.ticksToDowngrade < 5000) {
+      enqueue(new UpgradeTask(ctrl, 5000 - ctrl.ticksToDowngrade));
+    }
+    for (let p = ctrl.level * 150; p >= 100; p /= 2.0) {
+      enqueue(new UpgradeTask(ctrl, p));
     }
   }
 
   public run(creep: Creep, {controller}: UpgradeTask) {
+    if (!creep.energy) {
+      creep.stopTask();
+      return;
+    }
     let result = creep.upgradeController(controller);
     if (result === ERR_NOT_IN_RANGE) {
       result = creep.moveTo(controller);
     }
-    if (result === ERR_NOT_ENOUGH_ENERGY) {
-      creep.task = null;
+    if (result !== OK && result !== ERR_TIRED) {
+      creep.stopTask();
     }
   }
 
@@ -51,20 +64,21 @@ class UpgradeTaskManager implements Manager<UpgradeTask> {
 interface SerializedUpgradeTask {
   type: 'upgrade';
   controllerId: string;
+  priority: number;
 }
 
 class UpgradeTaskSerializer implements Serializer<UpgradeTask, SerializedUpgradeTask> {
   public readonly type = UPGRADE_TASK;
 
-  public serialize({controller}: UpgradeTask): SerializedUpgradeTask {
-    return {type: UPGRADE_TASK, controllerId: controller.id};
+  public serialize({controller, priority}: UpgradeTask): SerializedUpgradeTask {
+    return {type: UPGRADE_TASK, controllerId: controller.id, priority};
   }
-  public unserialize({controllerId}: SerializedUpgradeTask): UpgradeTask {
+  public unserialize({controllerId, priority}: SerializedUpgradeTask): UpgradeTask {
     const controller = Game.getObjectById<Controller>(controllerId);
     if (!controller) {
       throw new Error(`Unknown controller ${controllerId}`);
     }
-    return new UpgradeTask(controller);
+    return new UpgradeTask(controller, priority);
   }
 }
 

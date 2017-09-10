@@ -2,7 +2,7 @@
 export interface Task {
   readonly type: string;
   priority: number;
-  pos?: RoomPosition;
+  pos: RoomPosition;
   isSameAs(other: any): boolean;
   toString(): string;
 }

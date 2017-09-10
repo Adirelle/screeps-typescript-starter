@@ -1,26 +1,15 @@
-import { log } from '../../lib/logger/log';
-import { registerSerializer, Serializer } from '../../lib/serializer';
+import { registerSerializer } from '../../lib/serializer';
 import managers from '../registry';
-import { Enqueue, Manager, Task } from '../task';
+import { SerializedTargettedTask, TargettedTask, TargettedTaskSerializer } from '../targetted';
+import { Enqueue, Manager } from '../task';
 
 const GATHER_TASK = 'gather';
 
-class GatherTask implements Task {
+class GatherTask extends TargettedTask<Creep> {
   public readonly type = GATHER_TASK;
 
-  constructor(public readonly target: Creep) {
-  }
-
-  public get priority(): number {
-    return this.target.payload / this.target.carryCapacity;
-  }
-
-  public toString() {
-    return `gather(${this.target.name},${this.priority})`;
-  }
-
-  public isSameAs(other: any) {
-    return other instanceof GatherTask && other.target.id === this.target.id;
+  public get priority() {
+    return 100.0 * this.target.energy / this.target.carryCapacity;
   }
 }
 
@@ -30,44 +19,35 @@ class GatherTaskManager implements Manager<GatherTask> {
 
   public manage(room: Room, enqueue: Enqueue<GatherTask>) {
     _.each(room.creeps, (creep) => {
-      if (creep.hasTask('harvest')) {
-        log.debug('need gather for', creep.name);
+      if (creep.hasTask('harvest') || creep.hasTask('idle')) {
         enqueue(new GatherTask(creep));
       }
     });
   }
 
   public run(creep: Creep, {target}: GatherTask) {
+    if (creep.isFull() || !target.energy) {
+      creep.stopTask();
+      return;
+    }
     let result = target.transfer(creep, RESOURCE_ENERGY);
     if (result === ERR_NOT_IN_RANGE) {
       result = creep.moveTo(target);
     }
-    if (result === ERR_FULL) {
-      creep.task = null;
+    if (result !== OK && result === ERR_FULL) {
+      creep.stopTask();
     }
   }
 
   public isCompatible(creep: Creep) {
-    return !creep.hasTask('harvest') && !creep.isFull();
+    return creep.energy === 0;
   }
 }
 
-interface SerializedGatherTask {
-  readonly type: 'gather';
-  readonly targetName: string;
-}
-
-class GatherTaskSerializer implements Serializer<GatherTask, SerializedGatherTask> {
+class GatherTaskSerializer extends TargettedTaskSerializer<Creep> {
   public readonly type = GATHER_TASK;
 
-  public serialize({target}: GatherTask): SerializedGatherTask {
-    return {type: GATHER_TASK, targetName: target.name};
-  }
-  public unserialize({targetName}: SerializedGatherTask): GatherTask {
-    const target = Game.creeps[targetName];
-    if (!target) {
-      throw new Error(`Unknown creep ${targetName}`);
-    }
+  protected buildTask(target: Creep, _u: SerializedTargettedTask): TargettedTask<Creep> {
     return new GatherTask(target);
   }
 }
