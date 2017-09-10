@@ -34,6 +34,9 @@ function cleanCreepMemory() {
 
 function manageRoom(room: Room) {
   const tasks = collectTasks(room);
+  if (tasks.length) {
+    assignTasks(room, tasks);
+  }
   const creeps = room.find<Creep>(FIND_MY_CREEPS);
   const orders = assignTasks(tasks, creeps);
   runSpawns(room, orders);
@@ -45,34 +48,35 @@ function collectTasks(room: Room): Task[] {
   return tasks;
 }
 
-function assignTasks(tasks: Task[], creeps: Creep[]): Task[] {
-  log.debug(`Assigning ${tasks.length} task(s) to ${creeps.length} creep(s)`);
-  if (!tasks) {
-    return [];
-  }
+function assignTasks(room: Room, tasks: Task[]): void {
+  const creeps = room.find<Creep>(FIND_MY_CREEPS);
   if (!creeps) {
-    return tasks;
+    return;
   }
-  tasks.sort((a: Task, b: Task) => a.priority - b.priority);
-  return _.filter(tasks, (task) => {
-    let creep: Creep|undefined = _.find(creeps, (c) => c.task && task.isSameAs(c.task));
-    if (creep) {
-      log.debug(`${task} already assigned to ${creep.name}`);
-      return false;
-    }
-    if (task.pos) {
-      creep = task.pos.findClosestByPath<Creep>(creeps, {filter: (c: Creep) => c.canAssign(task)});
-    } else {
-      creep = _.find(creeps, (c) => c.canAssign(task));
-    }
-    if (creep)  {
+  tasks.sort((a: Task, b: Task) => b.priority - a.priority);
+  log.debug(tasks.length, 'task(s)', creeps.length, 'creep(s)');
+
+  for (const task of tasks) {
+    const debug = ((...args: any[]) => log.debug(tasks.length, creeps.length, task.priority, ...args));
+    let i = _.findIndex(creeps, (c) => task.isSameAs(c.task));
+    if (i < 0) {
+      const potentials = _.filter(creeps, (c: Creep) => c.canAssign(task));
+      const creep = task.pos.findClosestByPath<Creep>(potentials);
+      if (!creep) {
+        debug(task, 'cannot assign');
+        continue;
+      }
       creep.assign(task);
-      log.debug(`Assigned ${task} to ${creep}`);
-      return false;
+      debug(task, 'assigned to', creep);
+      i = creeps.indexOf(creep);
+    } else {
+      debug(task, 'already assigned to', creeps[i]);
     }
-    log.debug(`Need new creep for ${task}`);
-    return true;
-  });
+    creeps.splice(i, 1);
+    if (!creeps.length) {
+      break;
+    }
+  }
 }
 
 function runSpawns(room: Room, orders: Task[]): void {
