@@ -52,7 +52,7 @@ function assignTasks(creeps: Creep[], tasks: Task[]): void {
   log.debug(tasks.length, 'task(s)', creeps.length, 'creep(s)');
 
   for (const task of tasks) {
-    const debug = ((...args: any[]) => log.debug(tasks.length, creeps.length, task.priority, ...args));
+    const debug = ((...args: any[]) => log.debug(Game.cpu.getUsed(), creeps.length, task.priority, ...args));
     let i = _.findIndex(creeps, (c) => task.isSameAs(c.task));
     if (i < 0) {
       const potentials = _.filter(creeps, (c: Creep) => c.canAssign(task));
