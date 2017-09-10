@@ -1,3 +1,4 @@
+import { log } from '../lib/logger/log';
 
 export interface Task {
   readonly id: string;
@@ -58,6 +59,9 @@ export abstract class BaseManager<T extends Task> {
   protected doOrMoveOrStop(result: ResultCode, target: TargetPosition, creep: Creep): void {
     if (result === ERR_NOT_IN_RANGE) {
       result = creep.moveTo(target);
+      if (result !== OK && result !== ERR_TIRED) {
+        log.info(`${creep} could not move: ${result}`);
+      }
     }
     if (result !== OK && result !== ERR_TIRED) {
       creep.stopTask();
