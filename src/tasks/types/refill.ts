@@ -14,7 +14,7 @@ class RefillTask extends TargettedTask<EnergyStructure> {
     const f = 1.0 - this.target.energy / this.target.energyCapacity;
     switch (this.target.structureType) {
       case STRUCTURE_SPAWN:
-        return 900 * f;
+        return 400 + 500 * f;
       default:
         return 500 * f;
     }
