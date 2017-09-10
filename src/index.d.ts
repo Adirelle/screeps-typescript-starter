@@ -17,7 +17,9 @@ interface Creep {
 }
 
 interface Room {
-  readonly creeps: Creep[];
+  readonly myCreeps: Creep[];
+  readonly myStructures: Structure[];
+  readonly myActiveStructures: Structure[];
   toString(): string;
 }
 

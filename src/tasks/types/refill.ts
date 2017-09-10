@@ -27,13 +27,9 @@ class RefillTaskManager implements Manager<RefillTask> {
 
   public manage(room: Room, enqueue: Enqueue<RefillTask>) {
     _.each(
-      room.find<EnergyStructure>(
-        FIND_MY_STRUCTURES,
-        {filter: (s: EnergyStructure) => (
-          s.isActive()
-          && s.energyCapacity
-          && s.energy < s.energyCapacity
-        )}
+      _.filter(
+        room.myActiveStructures,
+        (s: EnergyStructure) => s.energyCapacity && s.energy < s.energyCapacity
       ),
       (struct: EnergyStructure) => enqueue(new RefillTask(struct))
     );

@@ -22,13 +22,9 @@ class RepairTaskManager implements Manager<RepairTask> {
 
   public manage(room: Room, enqueue: Enqueue<RepairTask>) {
     const tasks = _.map(
-      room.find<Repairable>(
-        FIND_MY_STRUCTURES,
-        {filter: (r: Structure) => (
-          r.isActive()
-          && r.hitsMax
-          && r.hits < 0.95 * r.hitsMax
-        )}
+      _.filter(
+        room.myActiveStructures,
+        (r: Structure) => r.hitsMax && r.hits < 0.95 * r.hitsMax
       ),
       (r: Repairable) => new RepairTask(r)
     );

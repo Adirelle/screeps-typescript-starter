@@ -37,7 +37,7 @@ function manageRoom(room: Room) {
   spawnCreeps(room);
   const tasks = collectTasks(room);
   if (tasks.length) {
-    assignTasks(room, tasks);
+    assignTasks(room.myCreeps, tasks);
   }
 }
 
@@ -47,11 +47,7 @@ function collectTasks(room: Room): Task[] {
   return tasks;
 }
 
-function assignTasks(room: Room, tasks: Task[]): void {
-  const creeps = room.find<Creep>(FIND_MY_CREEPS);
-  if (!creeps) {
-    return;
-  }
+function assignTasks(creeps: Creep[], tasks: Task[]): void {
   tasks.sort((a: Task, b: Task) => b.priority - a.priority);
   log.debug(tasks.length, 'task(s)', creeps.length, 'creep(s)');
 

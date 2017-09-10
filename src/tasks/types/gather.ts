@@ -18,7 +18,7 @@ class GatherTaskManager implements Manager<GatherTask> {
   public readonly requiredBodyParts = [CARRY, MOVE];
 
   public manage(room: Room, enqueue: Enqueue<GatherTask>) {
-    _.each(room.creeps, (creep) => {
+    _.each(room.myCreeps, (creep) => {
       if (creep.hasTask('harvest') || creep.hasTask('idle')) {
         enqueue(new GatherTask(creep));
       }
