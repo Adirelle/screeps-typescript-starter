@@ -36,7 +36,7 @@ class ManagerRegistry {
 
   public isCompatible(creep: Creep, task: Task|string) {
     const manager = this.getManager(task);
-    return creep.hasBodyParts(manager.requiredBodyParts) && manager.isCompatible(creep);
+    return manager.isCompatible(creep) && creep.hasBodyParts(manager.requiredBodyParts);
   }
 }
 
