@@ -12,3 +12,7 @@ Object.defineProperties(Room.prototype, {
     }
   }
 });
+
+Room.prototype.toString = function(this: Room): string {
+  return `[Room ${this.name}]`;
+};

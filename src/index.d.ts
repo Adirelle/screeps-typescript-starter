@@ -18,6 +18,15 @@ interface Creep {
 
 interface Room {
   readonly creeps: Creep[];
+  toString(): string;
+}
+
+interface RoomPosition {
+  toString(): string;
+}
+
+interface Structure {
+  toString(): string;
 }
 
 declare const __REVISION__: string
