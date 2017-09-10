@@ -1,12 +1,15 @@
+import { log } from '../lib/logger/log';
 import { serialize, unserialize } from '../lib/serializer';
 import { registry } from './registry';
 import { Task } from './task';
+import { idleSingleton } from './types/idle';
 
 declare global {
   interface Creep {
-    task: Task|null;
+    task: Task;
     canAssign(task: Task): boolean;
     assign(task: Task): void;
+    stopTask(): void;
     hasBodyParts(parts: BodyPartType[]): boolean;
     isIdle(): boolean;
     hasTask(type: string): boolean;
@@ -15,26 +18,26 @@ declare global {
 
 Object.defineProperty(Creep.prototype, 'task', {
   configurable: true,
-  get(): Task|null {
-    if (this._task !== undefined) {
+  get(): Task {
+    if (this._task) {
       return this._task;
     }
-    const unserialized = this.memory.task;
-    if (typeof unserialized !== 'object' || !unserialized.type) {
+    try {
+      this._task = this.memory.task ? unserialize(this.memory.task) : idleSingleton;
+    } catch (err) {
+      log.error(err);
       delete this.memory.task;
-      this._task = null;
-      return null;
+      this._task = idleSingleton;
     }
-    this._task = unserialize(unserialized);
     return this._task;
   },
-  set(task: Task|null) {
+  set(task: Task) {
     if (task === this._task) {
       return;
     }
-    this._task = task || null;
-    if (task) {
-      this.memory.task = serialize(task);
+    this._task = task;
+    if (task !== idleSingleton) {
+      this.memory.task = serialize(this._task);
     } else {
       delete this.memory.task;
     }
@@ -42,7 +45,7 @@ Object.defineProperty(Creep.prototype, 'task', {
 });
 
 Creep.prototype.canAssign = function(this: Creep, task: Task): boolean {
-  return (!this.task || this.task.priority < task.priority) && registry.isCompatible(this, task);
+  return this.task.priority < task.priority && registry.isCompatible(this, task);
 };
 
 Creep.prototype.assign = function(this: Creep, task: Task): void {
@@ -52,12 +55,16 @@ Creep.prototype.assign = function(this: Creep, task: Task): void {
   this.task = task;
 };
 
+Creep.prototype.stopTask = function(this: Creep): void {
+  this.task = idleSingleton;
+};
+
 Creep.prototype.hasBodyParts = function(this: Creep, parts: BodyPartType[]) {
   return _.all(parts, (part) => this.getActiveBodyparts(part) > 0);
 };
 
 Creep.prototype.isIdle = function(this: Creep) {
-  return !this.task || this.task.type === 'idle';
+  return this.task === idleSingleton;
 };
 
 Creep.prototype.hasTask = function(this: Creep, type: string) {
