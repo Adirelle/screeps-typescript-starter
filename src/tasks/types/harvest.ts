@@ -1,32 +1,25 @@
 import { log } from '../../lib/logger/log';
 import { registerSerializer, Serializer } from '../../lib/serializer';
 import managers from '../registry';
-import { Enqueue, Manager, Task } from '../task';
+import { BaseManager, BaseTask, Enqueue } from '../task';
 
 const HARVEST_TASK = 'harvest';
 
-class HarvestTask implements Task {
+class HarvestTask extends BaseTask {
   public readonly type = HARVEST_TASK;
   public readonly priority = 1000;
 
   constructor(public source: Source, public pos: RoomPosition) {
+    super();
   }
 
   public toString() {
     return `harvest(${this.source.id},${this.pos})`;
   }
-
-  public isSameAs(other: any): boolean {
-    return (other instanceof HarvestTask) &&
-      other.source.id === this.source.id &&
-      other.pos.x === this.pos.x &&
-      other.pos.y === this.pos.y;
-  }
 }
 
-class HarvestTaskManager implements Manager<HarvestTask> {
+class HarvestTaskManager extends BaseManager<HarvestTask> {
   public readonly type = HARVEST_TASK;
-  public readonly requiredBodyParts = [WORK, CARRY, MOVE];
 
   public manage(room: Room, enqueue: Enqueue<HarvestTask>) {
     const slots = this.findSourceSlots(room);
@@ -42,22 +35,17 @@ class HarvestTaskManager implements Manager<HarvestTask> {
       creep.stopTask();
       return;
     }
-    let result = creep.harvest(source);
-    if (result === ERR_NOT_IN_RANGE) {
-      result = creep.moveTo(pos);
-    }
-    if (result !== OK && result !== ERR_TIRED) {
-      creep.stopTask();
-    }
+    this.doOrMoveOrStop(creep.harvest(source), pos, creep);
   }
 
-  public isCompatible(creep: Creep) {
-    return creep.isEmpty();
+  public fitnessFor(creep: Creep, _task: HarvestTask) {
+    if (creep.type.type !== 'worker') {
+      return 0;
+    }
+    return 1.0 - Math.pow(creep.payload / creep.carryCapacity, 2);
   }
 
-  private findSourceSlots(
-    room: Room
-  ): Array<{ sourceId: string; x: number; y: number }> {
+  private findSourceSlots(room: Room): Array<{ sourceId: string; x: number; y: number }> {
     if (room.memory.sourceSlots) {
       return room.memory.sourceSlots;
     }

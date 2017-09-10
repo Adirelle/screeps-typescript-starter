@@ -1,7 +1,7 @@
 import { registerSerializer } from '../../lib/serializer';
 import managers from '../registry';
 import { TargettedTask, TargettedTaskSerializer } from '../targetted';
-import { Enqueue, Manager } from '../task';
+import { BaseManager, Enqueue } from '../task';
 
 const REFILL_TASK = 'refill';
 
@@ -11,19 +11,18 @@ class RefillTask extends TargettedTask<EnergyStructure> {
   public readonly type = REFILL_TASK;
 
   public get priority() {
-    const f = 1.0 - this.target.energy / this.target.energyCapacity;
     switch (this.target.structureType) {
       case STRUCTURE_SPAWN:
-        return 400 + 500 * f;
+      case STRUCTURE_EXTENSION:
+        return 1000 - 20 * this.target.room.myCreeps.length;
       default:
-        return 500 * f;
+        return this.target.energyCapacity - this.target.energy;
     }
   }
 }
 
-class RefillTaskManager implements Manager<RefillTask> {
+class RefillTaskManager extends BaseManager<RefillTask> {
   public readonly type = REFILL_TASK;
-  public readonly requiredBodyParts = [CARRY, MOVE];
 
   public manage(room: Room, enqueue: Enqueue<RefillTask>) {
     _.each(
@@ -36,21 +35,15 @@ class RefillTaskManager implements Manager<RefillTask> {
   }
 
   public run(creep: Creep, {target}: RefillTask) {
-    if (!creep.energy || target.energy === target.energyCapacity) {
+    if (creep.isEmpty() || target.energy === target.energyCapacity) {
       creep.stopTask();
       return;
     }
-    let result = creep.transfer(target, RESOURCE_ENERGY);
-    if (result === ERR_NOT_IN_RANGE) {
-      result = creep.moveTo(target);
-    }
-    if (result !== OK && result !== ERR_TIRED) {
-      creep.stopTask();
-    }
+    this.doOrMoveOrStop(creep.transfer(target, RESOURCE_ENERGY), target, creep);
   }
 
-  public isCompatible(creep: Creep) {
-    return creep.energy === creep.carryCapacity;
+  public fitnessFor(creep: Creep, _task: RefillTask) {
+    return (creep.type.type === 'mule' ? 1.0 : 0.7) * Math.pow(creep.energy / creep.carryCapacity, 2);
   }
 }
 

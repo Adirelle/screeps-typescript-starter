@@ -1,33 +1,20 @@
 import { registerSerializer, Serializer } from '../../lib/serializer';
 import managers from '../registry';
-import { Enqueue, Manager, Task } from '../task';
+import { TargettedTask } from '../targetted';
+import { BaseManager, Enqueue } from '../task';
 
 const UPGRADE_TASK = 'upgrade';
 
-class UpgradeTask implements Task {
+class UpgradeTask extends TargettedTask<Controller> {
   public readonly type = UPGRADE_TASK;
 
-  public constructor(
-    public controller: Controller,
-    public priority: number
-  ) {}
-
-  public get pos() {
-    return this.controller.pos;
-  }
-
-  public toString() {
-    return `upgrade(${this.controller.room.name}, ${this.priority})`;
-  }
-
-  public isSameAs(other: any) {
-    return other instanceof UpgradeTask && other.controller.id === this.controller.id;
+  public constructor(target: Controller, public priority: number) {
+    super(target);
   }
 }
 
-class UpgradeTaskManager implements Manager<UpgradeTask> {
+class UpgradeTaskManager extends BaseManager<UpgradeTask> {
   public readonly type =  UPGRADE_TASK;
-  public readonly requiredBodyParts = [WORK, CARRY, MOVE];
 
   public manage(room: Room, enqueue: Enqueue<UpgradeTask>) {
     const ctrl = room.controller;
@@ -42,41 +29,27 @@ class UpgradeTaskManager implements Manager<UpgradeTask> {
     }
   }
 
-  public run(creep: Creep, {controller}: UpgradeTask) {
-    if (!creep.energy) {
-      creep.stopTask();
-      return;
-    }
-    let result = creep.upgradeController(controller);
-    if (result === ERR_NOT_IN_RANGE) {
-      result = creep.moveTo(controller);
-    }
-    if (result !== OK && result !== ERR_TIRED) {
-      creep.stopTask();
-    }
-  }
-
-  public isCompatible(creep: Creep) {
-    return creep.energy > 0;
+  public run(creep: Creep, {target}: UpgradeTask) {
+    this.doOrMoveOrStop(creep.upgradeController(target), target, creep);
   }
 }
 
 interface SerializedUpgradeTask {
   type: 'upgrade';
-  controllerId: string;
+  targetId: string;
   priority: number;
 }
 
 class UpgradeTaskSerializer implements Serializer<UpgradeTask, SerializedUpgradeTask> {
   public readonly type = UPGRADE_TASK;
 
-  public serialize({controller, priority}: UpgradeTask): SerializedUpgradeTask {
-    return {type: UPGRADE_TASK, controllerId: controller.id, priority};
+  public serialize({target, priority}: UpgradeTask): SerializedUpgradeTask {
+    return {type: UPGRADE_TASK, targetId: target.id, priority};
   }
-  public unserialize({controllerId, priority}: SerializedUpgradeTask): UpgradeTask {
-    const controller = Game.getObjectById<Controller>(controllerId);
+  public unserialize({targetId, priority}: SerializedUpgradeTask): UpgradeTask {
+    const controller = Game.getObjectById<Controller>(targetId);
     if (!controller) {
-      throw new Error(`Unknown controller ${controllerId}`);
+      throw new Error(`Unknown controller ${targetId}`);
     }
     return new UpgradeTask(controller, priority);
   }

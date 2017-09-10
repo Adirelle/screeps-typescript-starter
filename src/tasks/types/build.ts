@@ -1,7 +1,7 @@
 import { registerSerializer } from '../../lib/serializer';
 import managers from '../registry';
 import { SerializedTargettedTask, TargettedTask, TargettedTaskSerializer } from '../targetted';
-import { Enqueue, Manager } from '../task';
+import { BaseManager, Enqueue } from '../task';
 
 const BUILD_TASK = 'build';
 
@@ -19,9 +19,8 @@ class BuildTask extends TargettedTask<ConstructionSite> {
   }
 }
 
-class BuildTaskManager implements Manager<BuildTask> {
+class BuildTaskManager extends BaseManager<BuildTask> {
   public readonly type = BUILD_TASK;
-  public readonly requiredBodyParts = [WORK, CARRY, MOVE];
 
   public manage(room: Room, enqueue: Enqueue<BuildTask>) {
     const tasks = _.map(
@@ -35,21 +34,7 @@ class BuildTaskManager implements Manager<BuildTask> {
   }
 
   public run(creep: Creep, {target}: BuildTask) {
-    if (!creep.energy) {
-      creep.stopTask();
-      return;
-    }
-    let result = creep.build(target);
-    if (result === ERR_NOT_IN_RANGE) {
-      result = creep.moveTo(target);
-    }
-    if (result !== OK && result !== ERR_TIRED) {
-      creep.stopTask();
-    }
-  }
-
-  public isCompatible(creep: Creep) {
-    return creep.energy > 0;
+    this.doOrMoveOrStop(creep.build(target), target, creep);
   }
 }
 

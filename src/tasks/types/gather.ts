@@ -1,7 +1,7 @@
 import { registerSerializer } from '../../lib/serializer';
 import managers from '../registry';
 import { SerializedTargettedTask, TargettedTask, TargettedTaskSerializer } from '../targetted';
-import { Enqueue, Manager } from '../task';
+import { BaseManager, Enqueue } from '../task';
 
 const GATHER_TASK = 'gather';
 
@@ -13,34 +13,30 @@ class GatherTask extends TargettedTask<Creep> {
   }
 }
 
-class GatherTaskManager implements Manager<GatherTask> {
+class GatherTaskManager extends BaseManager<GatherTask> {
   public readonly type = GATHER_TASK;
-  public readonly requiredBodyParts = [CARRY, MOVE];
 
   public manage(room: Room, enqueue: Enqueue<GatherTask>) {
     _.each(room.myCreeps, (creep) => {
-      if (creep.hasTask('harvest') || creep.hasTask('idle')) {
+      if (creep.energy > 0 && creep.isTask('harvest')) {
         enqueue(new GatherTask(creep));
       }
     });
   }
 
-  public run(creep: Creep, {target}: GatherTask) {
-    if (creep.isFull() || !target.energy) {
+  public run(creep: Creep, { target }: GatherTask) {
+    if (creep.isFull() || target.isEmpty() || !target.isTask('harvest')) {
       creep.stopTask();
       return;
     }
-    let result = target.transfer(creep, RESOURCE_ENERGY);
-    if (result === ERR_NOT_IN_RANGE) {
-      result = creep.moveTo(target);
-    }
-    if (result !== OK && result === ERR_FULL) {
-      creep.stopTask();
-    }
+    this.doOrMoveOrStop(target.transfer(creep, RESOURCE_ENERGY), target, creep);
   }
 
-  public isCompatible(creep: Creep) {
-    return creep.energy === 0;
+  public fitnessFor(creep: Creep, task: GatherTask) {
+    if (task.target.id === creep.id) {
+      return 0;
+    }
+    return (creep.type.type === 'mule' ? 1.0 : 0.7) * (1.0 - Math.pow(creep.payload / creep.carryCapacity, 2));
   }
 }
 

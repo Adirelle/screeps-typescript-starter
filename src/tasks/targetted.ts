@@ -1,33 +1,23 @@
 import { Serializer } from './../lib/serializer';
-import { Task } from './task';
+import { BaseTask } from './task';
 
 interface TaskTarget {
   id: string;
   pos: RoomPosition;
 }
 
-export abstract class TargettedTask<T extends TaskTarget> implements Task {
-  constructor(public readonly target: T) {}
+export abstract class TargettedTask<T extends TaskTarget> extends BaseTask {
+  constructor(public readonly target: T) {
+    super();
+  }
 
   public get pos() {
     return this.target.pos;
   }
 
-  public isSameAs(other: any): boolean {
-    return (
-      other instanceof TargettedTask
-      && other.type === this.type
-      && other.target.id === this.target.id
-    );
-  }
-
-  public toString(): string {
+  public toString() {
     return `${this.type}(${this.target},${this.priority})`;
   }
-
-  public abstract get type(): string;
-
-  public abstract get priority(): number;
 }
 
 export interface SerializedTargettedTask {

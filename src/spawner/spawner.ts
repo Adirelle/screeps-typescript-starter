@@ -9,10 +9,10 @@ interface Population {
 export function spawnCreeps(room: Room): void {
   const spawns = _.filter(room.myActiveStructures, (s) => s.structureType === 'spawn') as Spawn[];
   const pop = countCreepsByType(room.myCreeps);
-  log.debug(`${room} population: ${pop.TOTAL} creep(s)`);
   const missing = listMissingTypes(spawns.length, pop);
+  log.debug(`${room} population: ${pop.TOTAL}/${pop.TOTAL + missing.length} creep(s)`);
   if (missing.length > 0) {
-    spawnMissingCreeps(room, missing, 1 + pop.TOTAL, spawns);
+    spawnMissingCreeps(room, missing, Math.max(1,  pop.TOTAL), spawns);
   }
 }
 
@@ -37,6 +37,7 @@ function listMissingTypes(roomSize: number, pop: Population): BodyType[] {
   const missing: BodyType[] = [];
   _.each(BODY_TYPES, ({type, num, body, priority}) => {
     const expected = roomSize * num;
+    // log.debug(`${type}: pop=${pop[type]}, expected=${expected}`);
     for (let current = pop[type]; current < expected; current++) {
       missing.push(new BodyType(type, num, priority * (1.0 - current / expected), body));
     }
@@ -47,10 +48,10 @@ function listMissingTypes(roomSize: number, pop: Population): BodyType[] {
 function spawnMissingCreeps(room: Room, missing: BodyType[], maxSize: number, spawns: Spawn[]): void {
   const spawnCapacity = getSpawnCapacity(room);
   spawns = _.filter(spawns, (s) => !s.spawning);
-  log.debug(
-    `${room}: ${missing.length} creep(s) to spawn, ${spawns.length} available spawn(s), ${spawnCapacity}`,
-   `spawn capacity, ${maxSize} maximum size`
-  );
+  // log.debug(
+  //  `${room}: ${missing.length} creep(s) to spawn, ${spawns.length} available spawn(s), ${spawnCapacity}`,
+  //  `spawn capacity, ${maxSize} maximum size`
+  // );
   if (!spawns.length) {
     return;
   }
@@ -75,7 +76,7 @@ function spawnMissingCreeps(room: Room, missing: BodyType[], maxSize: number, sp
       }
       break;
     }
-    log.debug(`${room}: spawning ${current} creep of size ${size}: ${result}`);
+    log.info(`${room}: spawning ${current} creep of size ${size}: ${result}`);
   }
 }
 

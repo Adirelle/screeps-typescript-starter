@@ -1,4 +1,4 @@
-import { BODY_TYPES, BodyType } from './spawner';
+import { BODY_TYPES, BodyType } from './body_types';
 
 declare global {
   interface Creep {

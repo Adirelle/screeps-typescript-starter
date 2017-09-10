@@ -1,7 +1,7 @@
 import { registerSerializer } from '../../lib/serializer';
 import managers from '../registry';
 import { SerializedTargettedTask, TargettedTask, TargettedTaskSerializer } from '../targetted';
-import { Enqueue, Manager } from '../task';
+import { BaseManager, Enqueue } from '../task';
 
 const REPAIR_TASK = 'repair';
 
@@ -16,9 +16,8 @@ class RepairTask extends TargettedTask<Repairable> {
   }
 }
 
-class RepairTaskManager implements Manager<RepairTask> {
+class RepairTaskManager extends BaseManager<RepairTask> {
   public readonly type = REPAIR_TASK;
-  public readonly requiredBodyParts = [WORK, CARRY, MOVE];
 
   public manage(room: Room, enqueue: Enqueue<RepairTask>) {
     const tasks = _.map(
@@ -35,21 +34,7 @@ class RepairTaskManager implements Manager<RepairTask> {
   }
 
   public run(creep: Creep, {target}: RepairTask) {
-    if (!creep.energy) {
-      creep.stopTask();
-      return;
-    }
-    let result = creep.repair(target);
-    if (result === ERR_NOT_IN_RANGE) {
-      result = creep.moveTo(target);
-    }
-    if (result !== OK && result !== ERR_TIRED) {
-      creep.stopTask();
-    }
-  }
-
-  public isCompatible(creep: Creep) {
-    return creep.energy > 0;
+    this.doOrMoveOrStop(creep.repair(target), target, creep);
   }
 }
 

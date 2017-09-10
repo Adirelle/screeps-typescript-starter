@@ -19,7 +19,7 @@ if (__REVISION__) {
 }
 
 function mloop(): void {
-  log.info(`=== Tick #${Game.time} ===`);
+  log.debug(`========== Tick #${Game.time} ==========`);
   cleanCreepMemory();
   _.each(Game.rooms, manageRoom);
   _.each(Game.creeps, (creep) => managers.run(creep));
@@ -35,10 +35,22 @@ function cleanCreepMemory() {
 
 function manageRoom(room: Room) {
   spawnCreeps(room);
-  const tasks = collectTasks(room);
-  if (tasks.length) {
-    assignTasks(room.myCreeps, tasks);
+  manageTasks(room);
+}
+
+function manageTasks(room: Room) {
+  const [idleCreeps, busyCreeps] = _.partition(room.myCreeps, (c) => c.isIdle());
+  log.debug(room, 'creeps:', busyCreeps.length, 'busy /', idleCreeps.length, 'idle');
+  if (!idleCreeps.length) {
+    return;
   }
+  const tasks = collectTasks(room);
+  removeAssignedTasks(tasks, busyCreeps);
+  log.debug(room, tasks.length, 'unassigned tasks');
+  if (!tasks.length) {
+    return;
+  }
+  assignTasks(idleCreeps, tasks);
 }
 
 function collectTasks(room: Room): Task[] {
@@ -47,31 +59,36 @@ function collectTasks(room: Room): Task[] {
   return tasks;
 }
 
-function assignTasks(creeps: Creep[], tasks: Task[]): void {
-  tasks.sort((a: Task, b: Task) => b.priority - a.priority);
-  log.debug(tasks.length, 'task(s)', creeps.length, 'creep(s)');
+function removeAssignedTasks(tasks: Task[], creeps: Creep[]) {
+  const assigned = _.indexBy(creeps, (c) => c.task.id);
+  _.remove(tasks, (t) => assigned[t.id]);
+}
 
-  for (const task of tasks) {
-    const debug = ((...args: any[]) => log.debug(Game.cpu.getUsed(), creeps.length, task.priority, ...args));
-    let i = _.findIndex(creeps, (c) => task.isSameAs(c.task));
-    if (i < 0) {
-      const potentials = _.filter(creeps, (c: Creep) => c.canAssign(task));
-      const creep = task.pos.findClosestByPath<Creep>(potentials);
-      if (!creep) {
-        debug(task, 'cannot assign');
-        continue;
+interface ScoredTask {
+  task: Task;
+  score: number;
+}
+
+function assignTasks(creeps: Creep[], tasks: Task[]): void {
+  const toAssign: { [name: string]: ScoredTask } = {};
+  _.each(creeps, (creep) => {
+    const name = creep.name;
+    _.each(tasks, (task) => {
+      const fitness = managers.fitnessFor(creep, task);
+      const range = Math.abs(task.pos.x - creep.pos.x) * Math.abs(task.pos.y - creep.pos.y) / (50 * 50);
+      const score = (fitness * task.priority) * (1.0 - range);
+      // log.debug(`creep=${name} task=${task} priority=${task.priority} fitness=${fitness} range=${range} score=${score}`);
+      if (fitness > 0 && (!toAssign[name] || toAssign[name].score < score)) {
+        toAssign[name] = {task, score};
       }
-      creep.assign(task);
-      debug(task, 'assigned to', creep);
-      i = creeps.indexOf(creep);
-    } else {
-      debug(task, 'already assigned to', creeps[i]);
-    }
-    creeps.splice(i, 1);
-    if (!creeps.length) {
-      break;
-    }
-  }
+    });
+  });
+
+  _.each(toAssign, ({task, score}, name) => {
+    const creep = Game.creeps[name!];
+    creep.assign(task);
+    log.info(`${creep.room}: assigned ${task} to ${creep} (priority=${task.priority} score=${score})`);
+  });
 }
 
 /**
