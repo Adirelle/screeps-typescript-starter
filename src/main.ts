@@ -33,13 +33,11 @@ function cleanCreepMemory() {
 }
 
 function manageRoom(room: Room) {
+  spawnCreeps(room);
   const tasks = collectTasks(room);
   if (tasks.length) {
     assignTasks(room, tasks);
   }
-  const creeps = room.find<Creep>(FIND_MY_CREEPS);
-  const orders = assignTasks(tasks, creeps);
-  runSpawns(room, orders);
 }
 
 function collectTasks(room: Room): Task[] {
@@ -79,30 +77,66 @@ function assignTasks(room: Room, tasks: Task[]): void {
   }
 }
 
-function runSpawns(room: Room, orders: Task[]): void {
-  if (!orders) {
-    return;
-  }
-  const spawns = room.find<Spawn>(FIND_MY_SPAWNS, {filter: (spawn: Spawn) => !spawn.spawning});
-  for (const task of orders) {
-    const body = managers.getManager(task).requiredBodyParts;
-    const filter = (s: Spawn) => s.canCreateCreep(body) === OK;
-    let spawn;
-    if (task.pos) {
-      spawn = task.pos.findClosestByPath(spawns, {filter});
-    } else {
-      spawn = _.find(spawns, filter);
-    }
-    if (spawn) {
-      const result = spawn.createCreep(body);
+interface CreepBodyType {
+  type: string;
+  num: number;
+  priority: number;
+  body: BodyPartType[];
+}
+
+const creepTypes: CreepBodyType[] = [
+  { type: 'mule', num: 2, body: [MOVE, CARRY], priority: 90 },
+  { type: 'worker', num: 8, body: [MOVE, MOVE, CARRY, WORK], priority: 100 }
+];
+
+function spawnCreeps(room: Room): void {
+  const pop = countCreepsByType(room);
+  const missing = listMissingTypes(room, pop);
+
+  missing.sort((a: CreepBodyType, b: CreepBodyType) => a.priority - b.priority);
+  const spawns = room.find<Spawn>(FIND_MY_SPAWNS, {filter: (s: Spawn) => !s.spawning});
+  for (const {body, type} of missing) {
+    while (spawns.length > 0) {
+      const spawn = spawns.shift() as Spawn;
+      const result = spawn.createCreep(body, undefined, {type});
       if (typeof result === 'string') {
-        const creep = Game.getObjectById<Creep>(result);
-        creep!.task = task;
-        continue;
+        log.info(`${spawn} spawns a new ${type} creep: ${result}`);
+        break;
       }
+      log.debug(`${spawn} cannot spawn ${type} creep: ${result}`);
     }
-    break;
+    if (!spawns.length) {
+      break;
+    }
   }
+}
+
+function countCreepsByType(room: Room): {[type: string]: number} {
+  const pop: {[type: string]: number} = {};
+  for (const {type} of creepTypes) {
+    pop[type] = 0;
+  }
+
+  for (const creep of room.creeps) {
+    const type = creep.memory.type;
+    if (type) {
+      pop[type]++;
+    }
+  }
+
+  return pop;
+}
+
+function listMissingTypes(room: Room, pop: {[type: string]: number}): CreepBodyType[] {
+  const numSpawns = room.find<Spawn>(FIND_MY_SPAWNS).length;
+  const missing: CreepBodyType[] = [];
+  for (const {type, num, body, priority} of creepTypes) {
+    const expected = numSpawns * num;
+    for (let current = pop[type]; current < expected; current++) {
+      missing.push({type, num, body, priority: priority * (1.0 - current / expected) });
+    }
+  }
+  return missing;
 }
 
 /*
