@@ -1,5 +1,4 @@
-import { Serializer } from './../lib/serializer';
-import { BaseTask } from './task';
+import { BaseTask, Task } from './task';
 
 interface TaskTarget {
   id: string;
@@ -7,40 +6,56 @@ interface TaskTarget {
 }
 
 export abstract class TargettedTask<T extends TaskTarget> extends BaseTask {
-  constructor(public readonly target: T) {
-    super();
+  private _target: T|null;
+
+  public get target(): T {
+    if (this._target) {
+      return this._target;
+    }
+    this._target = Game.getObjectById<T>(this.memory.targetId);
+    if (!this._target) {
+      throw new Error(`Unknown object ${this.memory.targetId}`);
+    }
+    return this._target;
   }
 
-  public get pos() {
+  public set target(target: T) {
+    this.memory.targetId = target.id;
+  }
+
+  constructor(creep?: Creep, target?: T) {
+    super(creep);
+    if (target) {
+      this.target = target;
+    }
+  }
+
+  public getPos(): RoomPosition {
     return this.target.pos;
   }
 
-  public toString() {
+  public isSameAs(other: Task): boolean {
+    return (super.isSameAs(other)
+      && (other instanceof TargettedTask)
+      && (other.target && other.target.id) === (this.target && this.target.id)
+    );
+  }
+
+  public run(): void {
+    if (this.isValidTarget(this.target)) {
+      super.run();
+    } else {
+      delete this.creep;
+    }
+  }
+
+  public toString(): string {
     return `${this.type}(${this.target},${this.priority})`;
   }
-}
 
-export interface SerializedTargettedTask {
-  type: string;
-  targetId: string;
-}
+  public abstract isValidTarget(target: T): boolean;
 
-export abstract class TargettedTaskSerializer<T extends TaskTarget>
-  implements Serializer<TargettedTask<T>, SerializedTargettedTask> {
-
-  public serialize({target}: TargettedTask<T>): SerializedTargettedTask {
-    return {type: this.type, targetId: target.id};
+  protected moveToTarget(): ResultCode {
+    return this.creep!.moveTo(this.target);
   }
-
-  public unserialize(u: SerializedTargettedTask): TargettedTask<T> {
-    const target = Game.getObjectById<T>(u.targetId);
-    if (!target) {
-      throw new Error(`Unknown object ${u.targetId}`);
-    }
-    return this.buildTask(target, u);
-  }
-
-  public abstract get type(): string;
-
-  protected abstract buildTask(target: T, u: SerializedTargettedTask): TargettedTask<T>;
 }

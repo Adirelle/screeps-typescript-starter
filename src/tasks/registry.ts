@@ -1,43 +1,36 @@
-import { log } from '../lib/logger/log';
-import { Enqueue, Manager, Task } from './task';
+import { Planner, Task, TaskType } from './task';
+import * as Types from './types';
 
-class ManagerRegistry {
-  public readonly type = 'registry';
-  public readonly requiredBodyParts = [];
+const planners: Planner[] = [
+  Types.planBuilds,
+  Types.planGathers,
+  Types.planHarvests,
+  Types.planRefills,
+  Types.planRepairs,
+  Types.planUpgrades
+];
 
-  private managers: { [type: string]: Manager<any> } = {};
-
-  public register<T extends Task>(manager: Manager<T>): void {
-    if (this.managers[manager.type]) {
-      return;
-    }
-    this.managers[manager.type] = manager;
-    log.debug(`Registered ${manager.type} manager`);
-  }
-
-  public manage<T extends Task>(room: Room, enqueue: Enqueue<T>): void {
-    _.each(this.managers, (manager) => manager.manage(room, enqueue));
-  }
-
-  public run(creep: Creep): void {
-    if (!creep.task || creep.spawning) {
-      return;
-    }
-    this.getManager(creep.task).run(creep, creep.task);
-  }
-
-  public getManager(task: Task|string): Manager<any> {
-    const type = typeof task === 'string' ? task : task.type;
-    if (!this.managers[type]) {
-      throw new Error(`Unknown task type ${type}`);
-    }
-    return this.managers[type];
-  }
-
-  public fitnessFor(creep: Creep, task: Task) {
-    return this.getManager(task).fitnessFor(creep, task);
-  }
+export function planTasks(room: Room): Task[] {
+  return _.flatten(_.map(planners, (p) => p(room)));
 }
 
-export const registry = new ManagerRegistry();
-export default registry;
+const ctors: { [type: string]: new (creep: Creep) => Task } = {
+  [TaskType.BUILD]: Types.BuildTask,
+  [TaskType.GATHER]: Types.GatherTask,
+  [TaskType.HARVEST]: Types.HarvestTask,
+  [TaskType.REFILL]: Types.RefillTask,
+  [TaskType.REPAIR]: Types.RepairTask,
+  [TaskType.UPGRADE]: Types.UpgradeTask
+};
+
+export function reviveTask(creep: Creep): Task {
+  const memory = creep.memory.task;
+  if (typeof memory === 'undefined' || memory.type === TaskType.IDLE) {
+    return Types.idleSingleton;
+  }
+  const ctor = ctors[memory.type];
+  if (!ctor) {
+    throw new Error(`Unknown task type ${memory.type}`);
+  }
+  return new ctor(creep);
+}

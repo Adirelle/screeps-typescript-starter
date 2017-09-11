@@ -1,70 +1,108 @@
-import { log } from '../lib/logger/log';
+
+export const enum TaskType {
+  BUILD = 'build',
+  GATHER = 'gather',
+  HARVEST = 'harvest',
+  IDLE = 'idle',
+  REFILL = 'refill',
+  REPAIR = 'repair',
+  UPGRADE = 'upgrade'
+}
 
 export interface Task {
-  readonly id: string;
-  readonly type: string;
-  priority: number;
-  pos: RoomPosition;
-  isSameAs(other: any): boolean;
+  readonly type: TaskType;
+  readonly priority: number;
+  creep?: Creep;
+
+  run(): void;
+  getPos(): RoomPosition;
+  creepCompatibility(creep: Creep): number;
+  isValidCreep(creep: Creep): boolean;
+  isSameAs(other: Task): boolean;
   toString(): string;
 }
 
 export abstract class BaseTask implements Task {
-  public abstract get type(): string;
+  protected memory: { [key: string]: any } = {};
+
+  private _creep?: Creep;
+
+  public abstract get type(): TaskType;
   public abstract get priority(): number;
-  public abstract get pos(): RoomPosition;
 
-  private _id?: string;
-
-  public get id(): string {
-    if (this._id !== undefined) {
-      return this._id;
-    }
-    const id = this.toString();
-    this._id = id;
-    return id;
+  public get creep(): Creep|undefined {
+    return this._creep;
   }
 
-  public isSameAs(other: any): boolean {
-    return other instanceof BaseTask && other.id === this.id;
+  public set creep(creep: Creep|undefined) {
+    const prev = this._creep;
+    if (creep === prev) {
+      return;
+    }
+    this._creep = creep;
+    if (prev) {
+      delete prev.task;
+    }
+    if (creep) {
+      if (!creep.memory.task) {
+        creep.memory.task = this.memory;
+      } else {
+        this.memory = creep.memory.task = _.assign({}, this.memory);
+      }
+      this.memory.type = this.type;
+      creep.task = this;
+    } else {
+      this.memory = _.assign({}, this.memory);
+    }
+  }
+
+  constructor(creep?: Creep) {
+    this.creep = creep;
+  }
+
+  public abstract getPos(): RoomPosition;
+
+  public isSameAs(other: Task): boolean {
+    return (other.type === this.type
+      && other.priority === this.priority
+      && other.creep === this.creep);
+  }
+
+  public run(): void {
+    if (!this.creep || !this.isValidCreep(this.creep)) {
+      return;
+    }
+    let result = this.doRun();
+    if (result === ERR_NOT_IN_RANGE) {
+      result = this.moveToTarget();
+      if (result === ERR_TIRED) {
+        return;
+      }
+    }
+    if (result !== OK) {
+      delete this.creep;
+    }
+  }
+
+  public creepCompatibility(creep: Creep): number {
+    if (!this.isValidCreep(creep)) {
+      return 0;
+    }
+    return this.doCreepCompatibility(creep);
   }
 
   public toString(): string {
-    return `${this.type}(${this.pos},${this.priority})`;
+    return `${this.type}(${this.getPos()},${this.priority})`;
+  }
+
+  public abstract isValidCreep(creep: Creep): boolean;
+
+  protected abstract doCreepCompatibility(creep: Creep): number;
+  protected abstract doRun(): ResultCode;
+
+  protected moveToTarget(): ResultCode {
+    return this.creep!.moveTo(this.getPos());
   }
 }
 
-export type Enqueue<T> = (t: T) => void;
-
-export interface Manager<T extends Task> {
-  readonly type: string;
-  manage(room: Room, enqueue: Enqueue<T>): void;
-  run(creep: Creep, task: T): void;
-  fitnessFor(creep: Creep, task: T): number;
-}
-
-export abstract class BaseManager<T extends Task> {
-  public abstract get type(): string;
-
-  public abstract manage(room: Room, enqueue: Enqueue<T>): void;
-  public abstract run(creep: Creep, task: T): void;
-
-  public fitnessFor(creep: Creep, _task: T): number {
-    if (creep.type.type !== 'worker') {
-      return 0;
-    }
-    return Math.pow(creep.energy / creep.carryCapacity, 2);
-  }
-
-  protected doOrMoveOrStop(result: ResultCode, target: TargetPosition, creep: Creep): void {
-    if (result === ERR_NOT_IN_RANGE) {
-      result = creep.moveTo(target);
-      if (result !== OK && result !== ERR_TIRED) {
-        log.info(`${creep} could not move: ${result}`);
-      }
-    }
-    if (result !== OK && result !== ERR_TIRED) {
-      creep.stopTask();
-    }
-  }
-}
+export type Planner = (room: Room) => Task[];

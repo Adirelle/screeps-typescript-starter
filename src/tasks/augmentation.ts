@@ -1,58 +1,47 @@
-import { log } from '../lib/logger/log';
-import { serialize, unserialize } from '../lib/serializer';
-import { Task } from './task';
-import { idleSingleton } from './types/idle';
+import { reviveTask } from './registry';
+import { Task, TaskType } from './task';
+import { idleSingleton } from './types';
 
 declare global {
   interface Creep {
-    task: Task;
-    assign(task: Task): void;
+    task?: Task;
     stopTask(): void;
     isIdle(): boolean;
-    isTask(type: string): boolean;
+    isTask(type: TaskType): boolean;
   }
 }
 
 Object.defineProperty(Creep.prototype, 'task', {
   configurable: true,
-  get(): Task {
+  get(this: Creep & { _task?: Task }): Task {
     if (this._task) {
       return this._task;
     }
-    try {
-      this._task = this.memory.task ? unserialize(this.memory.task) : idleSingleton;
-    } catch (err) {
-      log.error(err);
-      delete this.memory.task;
-      this._task = idleSingleton;
-    }
+    this._task = reviveTask(this.memory.task);
+    this._task.creep = this;
     return this._task;
   },
-  set(task: Task) {
-    if (task === this._task) {
+  set(this: Creep & { _task?: Task }, task: Task) {
+    const prev = this._task;
+    if (task === prev) {
       return;
     }
     this._task = task;
-    if (task !== idleSingleton) {
-      this.memory.task = serialize(this._task);
-    } else {
-      delete this.memory.task;
+    if (prev) {
+      delete prev.creep;
     }
+    task.creep = this;
   }
 });
-
-Creep.prototype.assign = function(this: Creep, task: Task): void {
-  this.task = task;
-};
 
 Creep.prototype.stopTask = function(this: Creep): void {
   this.task = idleSingleton;
 };
 
 Creep.prototype.isIdle = function(this: Creep) {
-  return this.task === idleSingleton;
+  return this.isTask(TaskType.IDLE);
 };
 
-Creep.prototype.isTask = function(this: Creep, type: string) {
-  return this.task ? this.task.type === type : false;
+Creep.prototype.isTask = function(this: Creep, type: TaskType) {
+  return this.task ? this.task.type === type : (type === TaskType.IDLE);
 };

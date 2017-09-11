@@ -1,57 +1,50 @@
-import { log } from '../../lib/logger/log';
-import { registerSerializer, Serializer } from '../../lib/serializer';
-import managers from '../registry';
-import { BaseManager, BaseTask, Enqueue } from '../task';
+import { TargettedTask } from '../targetted';
+import { TaskType } from '../task';
 
-const HARVEST_TASK = 'harvest';
+interface HarvestSpot {
+  id: string;
+  pos: RoomPosition;
+  source: Source;
+}
 
-class HarvestTask extends BaseTask {
-  public readonly type = HARVEST_TASK;
+export class HarvestTask extends TargettedTask<HarvestSpot> {
+  public readonly type = TaskType.HARVEST;
   public readonly priority = 1000;
 
-  constructor(public source: Source, public pos: RoomPosition) {
-    super();
+  public isValidTarget(target: HarvestSpot): boolean {
+    const creeps = target.pos.lookFor<Creep>(LOOK_CREEPS);
+    return creeps.length === 0 || (this.creep ? this.creep.id === creeps[0].id : false);
   }
 
-  public toString() {
-    return `harvest(${this.source.id},${this.pos})`;
+  public isValidCreep(creep: Creep): boolean {
+    return creep.type.type === 'worker' && !creep.isFull();
+  }
+
+  protected doCreepCompatibility(creep: Creep): number {
+    return 1.0 - Math.pow(creep.energy / creep.carryCapacity, 2);
+  }
+
+  protected doRun(): ResultCode {
+    return this.creep!.harvest(this.target.source);
   }
 }
 
-class HarvestTaskManager extends BaseManager<HarvestTask> {
-  public readonly type = HARVEST_TASK;
+const singleton = new HarvestTask();
 
-  public manage(room: Room, enqueue: Enqueue<HarvestTask>) {
-    const slots = this.findSourceSlots(room);
-    _.each(slots, ({ x, y, sourceId }) => {
-      const source = Game.getObjectById<Source>(sourceId) as Source;
-      const pos = new RoomPosition(x, y, room.name);
-      enqueue(new HarvestTask(source, pos));
-    });
-  }
+export function planHarvests(room: Room): HarvestTask[] {
+  return _.map(
+    _.filter(findHarvestSpots(room), (s) => singleton.isValidTarget(s)),
+    (s) => new HarvestTask(undefined, s)
+  );
+}
 
-  public run(creep: Creep, {source, pos}: HarvestTask) {
-    if (creep.isFull()) {
-      creep.stopTask();
-      return;
-    }
-    this.doOrMoveOrStop(creep.harvest(source), pos, creep);
-  }
+const findHarvestSpots = _.memoize(_findHarvestSpots, (room: Room) => room.name);
 
-  public fitnessFor(creep: Creep, _task: HarvestTask) {
-    if (creep.type.type !== 'worker') {
-      return 0;
-    }
-    return 1.0 - Math.pow(creep.payload / creep.carryCapacity, 2);
-  }
-
-  private findSourceSlots(room: Room): Array<{ sourceId: string; x: number; y: number }> {
-    if (room.memory.sourceSlots) {
-      return room.memory.sourceSlots;
-    }
-    const sources = room.find<Source>(FIND_SOURCES_ACTIVE);
-    room.memory.sourceSlots = [];
-    _.each(sources, (source) => {
+function _findHarvestSpots(room: Room): HarvestSpot[] {
+  const spots: HarvestSpot[] = [];
+  _.each(
+    room.find<Source>(FIND_SOURCES_ACTIVE),
+    (source) => {
       _.each(
         room.lookForAtArea(
           LOOK_TERRAIN,
@@ -63,45 +56,10 @@ class HarvestTaskManager extends BaseManager<HarvestTask> {
         ),
         ({ x, y, terrain }: LookAtResultWithPos) => {
           if (terrain === 'swamp' || terrain === 'plain') {
-            log.debug(`Source slot: ${source.id}, ${x}, ${y}`);
-            room.memory.sourceSlots.push({ sourceId: source.id, x, y });
+            spots.push({id: `${source.id}-${x}-${y}`, source, pos: new RoomPosition(x, y, room.name)});
           }
         }
       );
     });
-    return room.memory.sourceSlots;
-  }
+  return spots;
 }
-
-interface SerializedHarvestTask {
-  type: string;
-  sourceId: string;
-  x: number;
-  y: number;
-}
-
-class HarvestSerializer
-  implements Serializer<HarvestTask, SerializedHarvestTask> {
-  public readonly type = HARVEST_TASK;
-
-  public serialize({ source, pos: { x, y } }: HarvestTask) {
-    return {
-      priority: 0,
-      sourceId: source.id,
-      type: HARVEST_TASK,
-      x,
-      y
-    } as SerializedHarvestTask;
-  }
-
-  public unserialize({ sourceId, x, y }: SerializedHarvestTask) {
-    const source = Game.getObjectById<Source>(sourceId);
-    if (!source) {
-      throw new Error(`Unknown source ${sourceId}`);
-    }
-    return new HarvestTask(source, new RoomPosition(x, y, source.room.name));
-  }
-}
-
-registerSerializer(new HarvestSerializer());
-managers.register(new HarvestTaskManager());
