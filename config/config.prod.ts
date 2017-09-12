@@ -12,14 +12,14 @@ function webpackConfig(options: EnvOptions = {}): Config {
 
   // make "dev" specific changes here
   const credentials: Credentials = require('./credentials.json');
-  credentials.branch = 'dev';
+  credentials.branch = 'master';
 
   config.plugin('screeps')
     .use(ScreepsWebpackPlugin, [credentials]);
 
   // modify the args of "define" plugin
   config.plugin('define').tap((args: any[]) => {
-    args[0].PRODUCTION = JSON.stringify(false);
+    args[0].PRODUCTION = JSON.stringify(true);
     return args;
   });
 

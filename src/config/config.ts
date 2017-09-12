@@ -9,27 +9,27 @@ export const ENABLE_DEBUG_MODE: boolean = true;
 /**
  * Enable this to enable screeps profiler
  */
-export const USE_PROFILER: boolean = true;
+export const USE_PROFILER: boolean = !PRODUCTION;
 
 /**
  * Debug level for log output
  */
-export const LOG_LEVEL: number = LogLevels.DEBUG;
+export const LOG_LEVEL: number = PRODUCTION ? LogLevels.INFO : LogLevels.DEBUG;
 
 /**
  * Prepend log output with current tick number.
  */
-export const LOG_PRINT_TICK: boolean = true;
+export const LOG_PRINT_TICK: boolean = !PRODUCTION;
 
 /**
  * Prepend log output with source line.
  */
-export const LOG_PRINT_LINES: boolean = true;
+export const LOG_PRINT_LINES: boolean = !PRODUCTION;
 
 /**
  * Load source maps and resolve source lines back to typeascript.
  */
-export const LOG_LOAD_SOURCE_MAP: boolean = true;
+export const LOG_LOAD_SOURCE_MAP: boolean = !PRODUCTION;
 
 /**
  * Maximum padding for source links (for aligning log output).

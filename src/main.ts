@@ -12,7 +12,7 @@ if (Config.USE_PROFILER) {
   log.debug('Profiler enabled');
 }
 
-log.info('Scripts bootstrapped');
+log.info(`Scripts bootstrapped, built at ${__BUILD_TIME__}, env ${__ENV__}`);
 
 if (__REVISION__) {
   log.info(`Revision ID: ${__REVISION__}`);

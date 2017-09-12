@@ -14,7 +14,8 @@
     "typings": "typings",
     "watch": "webpack --colors --watch",
     "watch-dev": "webpack --colors --watch --env.ENV=dev",
-    "watch-local": "webpack --colors --watch --env.ENV=local"
+    "watch-local": "webpack --colors --watch --env.ENV=local",
+    "deploy": "webpack --colors --env.ENV=prod"
   },
   "author": "",
   "license": "MIT",

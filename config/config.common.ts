@@ -97,9 +97,10 @@ export function init(options: EnvOptions): Config {
   // See https://github.com/kurttheviking/git-rev-sync-js for more git options
   config.plugin('define')
     .use((webpack.DefinePlugin as Config.PluginClass), [{
-      PRODUCTION: JSON.stringify(true),
-      __BUILD_TIME__: JSON.stringify(Date.now()),  // example defination
-      __REVISION__: gitRepoExists ? JSON.stringify(git.short()) : JSON.stringify('')
+      PRODUCTION: JSON.stringify(ENV === 'prod'),
+      __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+      __ENV__: JSON.stringify(ENV),
+      __REVISION__: JSON.stringify(gitRepoExists ? git.short() : '???')
     }]);
 
   config.plugin('screeps-source-map')
