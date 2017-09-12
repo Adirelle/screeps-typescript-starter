@@ -1,8 +1,14 @@
 import { TargettedTask } from '../targetted';
-import { TaskType } from '../task';
+import { TASK_UPGRADE } from '../task';
 
 export class UpgradeTask extends TargettedTask<Controller> {
-  public readonly type = TaskType.UPGRADE;
+
+  public static plan(room: Room): UpgradeTask[] {
+    const ctrl = room.controller;
+    return ctrl ? [new UpgradeTask(ctrl)] : [];
+  }
+
+  public readonly type = TASK_UPGRADE;
 
   public get priority() {
     if (this.target.ticksToDowngrade < 5000) {
@@ -26,9 +32,4 @@ export class UpgradeTask extends TargettedTask<Controller> {
   protected doRun() {
     return this.creep!.upgradeController(this.target);
   }
-}
-
-export function planUpgrades(room: Room): UpgradeTask[] {
-  const ctrl = room.controller;
-  return ctrl ? [new UpgradeTask(undefined, ctrl)] : [];
 }

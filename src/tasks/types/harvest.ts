@@ -1,5 +1,5 @@
 import { TargettedTask } from '../targetted';
-import { TaskType } from '../task';
+import { TASK_HARVEST } from '../task';
 
 interface HarvestSpot {
   id: string;
@@ -8,12 +8,17 @@ interface HarvestSpot {
 }
 
 export class HarvestTask extends TargettedTask<HarvestSpot> {
-  public readonly type = TaskType.HARVEST;
+
+  public static plan(room: Room): HarvestTask[] {
+    return _.map(findHarvestSpots(room), (s) => new HarvestTask(s));
+  }
+
+  public readonly type = TASK_HARVEST;
+
   public readonly priority = 1000;
 
-  public isValidTarget(target: HarvestSpot): boolean {
-    const creeps = target.pos.lookFor<Creep>(LOOK_CREEPS);
-    return creeps.length === 0 || (this.creep ? this.creep.id === creeps[0].id : false);
+  public isValidTarget(_target: HarvestSpot): boolean {
+    return true;
   }
 
   public isValidCreep(creep: Creep): boolean {
@@ -27,15 +32,6 @@ export class HarvestTask extends TargettedTask<HarvestSpot> {
   protected doRun(): ResultCode {
     return this.creep!.harvest(this.target.source);
   }
-}
-
-const singleton = new HarvestTask();
-
-export function planHarvests(room: Room): HarvestTask[] {
-  return _.map(
-    _.filter(findHarvestSpots(room), (s) => singleton.isValidTarget(s)),
-    (s) => new HarvestTask(undefined, s)
-  );
 }
 
 const findHarvestSpots = _.memoize(_findHarvestSpots, (room: Room) => room.name);

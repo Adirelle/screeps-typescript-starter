@@ -1,51 +1,20 @@
-import { BaseTask, Task } from './task';
+import { BaseTask } from './task';
 
-interface TaskTarget {
-  id: string;
-  pos: RoomPosition;
-}
+export abstract class TargettedTask<T extends {pos: RoomPosition}> extends BaseTask {
 
-export abstract class TargettedTask<T extends TaskTarget> extends BaseTask {
-  private _target: T|null;
-
-  public get target(): T {
-    if (this._target) {
-      return this._target;
-    }
-    this._target = Game.getObjectById<T>(this.memory.targetId);
-    if (!this._target) {
-      throw new Error(`Unknown object ${this.memory.targetId}`);
-    }
-    return this._target;
+  public get pos() {
+    return this.target && this.target.pos;
   }
 
-  public set target(target: T) {
-    this.memory.targetId = target.id;
-  }
-
-  constructor(creep?: Creep, target?: T) {
+  constructor(public target: T, creep?: Creep) {
     super(creep);
-    if (target) {
-      this.target = target;
-    }
-  }
-
-  public getPos(): RoomPosition {
-    return this.target.pos;
-  }
-
-  public isSameAs(other: Task): boolean {
-    return (super.isSameAs(other)
-      && (other instanceof TargettedTask)
-      && (other.target && other.target.id) === (this.target && this.target.id)
-    );
   }
 
   public run(): void {
-    if (this.isValidTarget(this.target)) {
+    if (this.hasValidTarget()) {
       super.run();
-    } else {
-      delete this.creep;
+    } else if (this.creep) {
+      this.creep.stopTask();
     }
   }
 
@@ -53,7 +22,11 @@ export abstract class TargettedTask<T extends TaskTarget> extends BaseTask {
     return `${this.type}(${this.target},${this.priority})`;
   }
 
-  public abstract isValidTarget(target: T): boolean;
+  public hasValidTarget(): boolean {
+    return this.isValidTarget(this.target);
+  }
+
+  public abstract isValidTarget(_target: T): boolean;
 
   protected moveToTarget(): ResultCode {
     return this.creep!.moveTo(this.target);

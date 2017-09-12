@@ -1,17 +1,29 @@
 import { TargettedTask } from '../targetted';
-import { TaskType } from '../task';
+import { TASK_REPAIR } from '../task';
 
 type Repairable = Structure & HitPoints;
 
-class RepairTask extends TargettedTask<Repairable> {
-  public readonly type = TaskType.REPAIR;
+function isValidTarget(target: Repairable) {
+  return target.hits < target.hitsMax;
+}
+
+export class RepairTask extends TargettedTask<Repairable> {
+
+  public static plan(room: Room): RepairTask[] {
+    return  _.map(
+      _.filter(room.myActiveStructures, isValidTarget),
+      (s) => new RepairTask(s)
+    );
+  }
+
+  public readonly type = TASK_REPAIR;
 
   public get priority() {
     return 100 * (this.target.hits / this.target.hitsMax);
   }
 
   public isValidTarget(target: Repairable) {
-    return target.hits < target.hitsMax;
+    return isValidTarget(target);
   }
 
   public isValidCreep(creep: Creep) {
@@ -25,13 +37,4 @@ class RepairTask extends TargettedTask<Repairable> {
   protected doRun() {
     return this.creep!.repair(this.target);
   }
-}
-
-const singleton = new RepairTask();
-
-export function planRepairs(room: Room): RepairTask[] {
-  return  _.map(
-    _.filter(room.myActiveStructures, (s) => singleton.isValidTarget(s)),
-    (s) => new RepairTask(undefined, s)
-  );
 }

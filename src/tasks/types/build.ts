@@ -1,8 +1,16 @@
 import { TargettedTask } from '../targetted';
-import { TaskType } from '../task';
+import { TASK_BUILD } from '../task';
 
 export class BuildTask extends TargettedTask<ConstructionSite> {
-  public readonly type = TaskType.BUILD;
+
+  public static plan(room: Room): BuildTask[] {
+    return _.map(
+      room.find<ConstructionSite>(FIND_MY_CONSTRUCTION_SITES),
+      (site) => new BuildTask(site)
+    );
+  }
+
+  public readonly type = TASK_BUILD;
 
   public get priority() {
     return 100 * Math.pow(this.target.progress / this.target.progressTotal, 2);
@@ -23,11 +31,4 @@ export class BuildTask extends TargettedTask<ConstructionSite> {
   protected doRun(): ResultCode {
     return this.creep!.build(this.target);
   }
-}
-
-export function planBuilds(room: Room): BuildTask[] {
-  return _.map(
-    room.find<ConstructionSite>(FIND_MY_CONSTRUCTION_SITES),
-    (site) => new BuildTask(undefined, site)
-  );
 }

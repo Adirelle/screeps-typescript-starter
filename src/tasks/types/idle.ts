@@ -1,9 +1,7 @@
-import { Task, TaskType } from '../task';
-
-const nullPos = new RoomPosition(NaN, NaN, 'neverland');
+import { Task, TASK_IDLE } from '../task';
 
 class IdleTask implements Task {
-  public readonly type = TaskType.IDLE;
+  public readonly type = TASK_IDLE;
   public readonly priority = -1e6;
 
   public get creep(): Creep|undefined {
@@ -15,19 +13,15 @@ class IdleTask implements Task {
   }
 
   public toString() {
-    return TaskType.IDLE;
+    return TASK_IDLE;
   }
 
   public isSameAs(other: Task) {
-    return other.type === TaskType.IDLE;
+    return other.type === TASK_IDLE;
   }
 
   public run() {
     /* NOOP */
-  }
-
-  public getPos() {
-    return nullPos;
   }
 
   public creepCompatibility(_creep: Creep) {

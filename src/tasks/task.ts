@@ -1,21 +1,20 @@
+export type TaskType = 'build'|'gather'|'harvest'|'idle'|'refill'|'repair'|'upgrade';
 
-export const enum TaskType {
-  BUILD = 'build',
-  GATHER = 'gather',
-  HARVEST = 'harvest',
-  IDLE = 'idle',
-  REFILL = 'refill',
-  REPAIR = 'repair',
-  UPGRADE = 'upgrade'
-}
+export const TASK_BUILD = 'build';
+export const TASK_GATHER = 'gather';
+export const TASK_HARVEST = 'harvest';
+export const TASK_IDLE = 'idle';
+export const TASK_REFILL = 'refill';
+export const TASK_REPAIR = 'repair';
+export const TASK_UPGRADE = 'upgrade';
 
 export interface Task {
   readonly type: TaskType;
   readonly priority: number;
+  readonly pos?: RoomPosition;
   creep?: Creep;
 
   run(): void;
-  getPos(): RoomPosition;
   creepCompatibility(creep: Creep): number;
   isValidCreep(creep: Creep): boolean;
   isSameAs(other: Task): boolean;
@@ -23,53 +22,29 @@ export interface Task {
 }
 
 export abstract class BaseTask implements Task {
-  protected memory: { [key: string]: any } = {};
-
-  private _creep?: Creep;
 
   public abstract get type(): TaskType;
   public abstract get priority(): number;
+  public abstract get pos(): RoomPosition|undefined;
 
-  public get creep(): Creep|undefined {
-    return this._creep;
-  }
-
-  public set creep(creep: Creep|undefined) {
-    const prev = this._creep;
-    if (creep === prev) {
-      return;
-    }
-    this._creep = creep;
-    if (prev) {
-      delete prev.task;
-    }
-    if (creep) {
-      if (!creep.memory.task) {
-        creep.memory.task = this.memory;
-      } else {
-        this.memory = creep.memory.task = _.assign({}, this.memory);
-      }
-      this.memory.type = this.type;
-      creep.task = this;
-    } else {
-      this.memory = _.assign({}, this.memory);
-    }
-  }
-
-  constructor(creep?: Creep) {
-    this.creep = creep;
-  }
-
-  public abstract getPos(): RoomPosition;
+  constructor(public creep?: Creep) {}
 
   public isSameAs(other: Task): boolean {
-    return (other.type === this.type
-      && other.priority === this.priority
-      && other.creep === this.creep);
+    return this.type === other.type;
+  }
+
+  public toString(): string {
+    return `${this.type}(${this.priority})`;
+  }
+
+  public abstract isValidCreep(creep: Creep): boolean;
+
+  public hasValidCreep(): boolean {
+    return this.creep ? this.isValidCreep(this.creep) : false;
   }
 
   public run(): void {
-    if (!this.creep || !this.isValidCreep(this.creep)) {
+    if (this.hasValidCreep()) {
       return;
     }
     let result = this.doRun();
@@ -91,18 +66,10 @@ export abstract class BaseTask implements Task {
     return this.doCreepCompatibility(creep);
   }
 
-  public toString(): string {
-    return `${this.type}(${this.getPos()},${this.priority})`;
+  protected moveToTarget(): ResultCode {
+    return this.pos ? this.creep!.moveTo(this.pos) : ERR_NOT_FOUND;
   }
-
-  public abstract isValidCreep(creep: Creep): boolean;
 
   protected abstract doCreepCompatibility(creep: Creep): number;
   protected abstract doRun(): ResultCode;
-
-  protected moveToTarget(): ResultCode {
-    return this.creep!.moveTo(this.getPos());
-  }
 }
-
-export type Planner = (room: Room) => Task[];

@@ -1,10 +1,22 @@
 import { TargettedTask } from '../targetted';
-import { TaskType } from '../task';
+import { TASK_REFILL } from '../task';
 
 type EnergyStructure = EnergyContainer & Structure;
 
+function isValidTarget(target: EnergyStructure) {
+  return target.energyCapacity ? target.energy < target.energyCapacity : false;
+}
+
 export class RefillTask extends TargettedTask<EnergyStructure> {
-  public readonly type = TaskType.REFILL;
+
+  public static plan(room: Room) {
+    return _.map(
+      _.filter(room.myActiveStructures, isValidTarget),
+      (s: EnergyStructure) => new RefillTask(s)
+    );
+  }
+
+  public readonly type = TASK_REFILL;
 
   public get priority() {
     switch (this.target.structureType) {
@@ -21,7 +33,7 @@ export class RefillTask extends TargettedTask<EnergyStructure> {
   }
 
   public isValidTarget(target: EnergyStructure) {
-    return target.energyCapacity ? target.energy < target.energyCapacity : false;
+    return isValidTarget(target);
   }
 
   public doRun() {
@@ -31,13 +43,4 @@ export class RefillTask extends TargettedTask<EnergyStructure> {
   public doCreepCompatibility(creep: Creep) {
     return (creep.type.type === 'mule' ? 1.0 : 0.7) * Math.pow(creep.energy / creep.carryCapacity, 2);
   }
-}
-
-const singleton = new RefillTask();
-
-export function planRefills(room: Room) {
-  return _.map(
-    _.filter(room.myActiveStructures, (s: EnergyStructure) => singleton.isValidTarget(s)),
-    (s: EnergyStructure) => new RefillTask(undefined, s)
-  );
 }
