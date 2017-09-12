@@ -85,12 +85,12 @@ function assignTasks(creeps: Creep[], tasks: Task[]): void {
       const score = fitness * task.priority * (1.0 - range);
       // log.debug(`creep=${name} task=${task} priority=${task.priority} fitness=${fitness} range=${range} score=${score}`);
       if (fitness > 0 && (!toAssign[name] || toAssign[name].score < score)) {
-        toAssign[name] = {task, score};
+        toAssign[name] = { task, score };
       }
     });
   });
 
-  _.each(toAssign, ({task, score}, name) => {
+  _.each(toAssign, ({ task, score }, name) => {
     const creep = Game.creeps[name!];
     creep.task = task;
     log.info(`${creep.room}: assigned ${task} to ${creep} (priority=${task.priority} score=${score})`);
