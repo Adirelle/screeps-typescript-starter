@@ -22,7 +22,17 @@ function mloop(): void {
   log.debug(`========== Tick #${Game.time} ==========`);
   cleanCreepMemory();
   _.each(Game.rooms, manageRoom);
-  _.each(Game.creeps, (creep) => creep.task && creep.task.run());
+  _.each(Game.creeps, (creep) => {
+    if (!creep.task) {
+      return;
+    }
+    try {
+      creep.task.run();
+    } catch (ex) {
+      log.error(creep, creep.task, ex);
+      creep.stopTask();
+    }
+  });
 }
 
 function cleanCreepMemory() {
