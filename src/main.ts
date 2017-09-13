@@ -35,7 +35,7 @@ function mloop(): void {
 function cleanCreepMemory() {
   for (const name in Memory.creeps) {
     if (!Game.creeps[name]) {
-      Memory.creeps[name] = undefined;
+      delete Memory.creeps[name];
     }
   }
 }
