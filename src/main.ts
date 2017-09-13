@@ -23,13 +23,10 @@ function mloop(): void {
   cleanCreepMemory();
   _.each(Game.rooms, manageRoom);
   _.each(Game.creeps, (creep) => {
-    if (!creep.task) {
-      return;
-    }
     try {
       creep.task.run();
     } catch (ex) {
-      log.error(creep, creep.task, ex);
+      log.error('During task run:', creep, creep.task, ex);
       creep.stopTask();
     }
   });
@@ -44,8 +41,16 @@ function cleanCreepMemory() {
 }
 
 function manageRoom(room: Room) {
-  spawnCreeps(room);
-  manageTasks(room);
+  try {
+    spawnCreeps(room);
+  } catch (ex) {
+    log.error('during spawnCreeps', room, ex);
+  }
+  try {
+    manageTasks(room);
+  } catch (ex) {
+    log.error('during manageTasks', room, ex);
+  }
 }
 
 function manageTasks(room: Room) {
