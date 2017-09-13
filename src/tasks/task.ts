@@ -1,3 +1,4 @@
+import { log } from '../lib/logger/log';
 export type TaskType = 'build'|'gather'|'harvest'|'idle'|'refill'|'repair'|'upgrade';
 
 export const TASK_BUILD = 'build';
@@ -37,6 +38,12 @@ export abstract class BaseTask implements Task {
     return `${this.type}(${this.priority})`;
   }
 
+  public toJSON(): any {
+    const plain: any = _.mapValues(this, _.identity);
+    delete plain.creep;
+    return plain;
+  }
+
   public abstract isValidCreep(creep: Creep): boolean;
 
   public hasValidCreep(): boolean {
@@ -44,7 +51,12 @@ export abstract class BaseTask implements Task {
   }
 
   public run(): void {
-    if (this.hasValidCreep()) {
+    if (!this.creep) {
+      return;
+    }
+    if (!this.hasValidCreep()) {
+      log.debug(this, 'invalid creep:', this.creep);
+      this.creep.stopTask();
       return;
     }
     let result = this.doRun();
@@ -55,7 +67,7 @@ export abstract class BaseTask implements Task {
       }
     }
     if (result !== OK) {
-      delete this.creep;
+      this.creep.stopTask();
     }
   }
 

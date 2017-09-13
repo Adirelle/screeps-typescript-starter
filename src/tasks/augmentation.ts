@@ -1,4 +1,5 @@
-import * as Registry from './registry';
+import { log } from '../lib/logger/log';
+import { deserialize } from './registry';
 import { Task, TASK_IDLE, TaskType } from './task';
 import { idleSingleton } from './types';
 
@@ -11,34 +12,31 @@ declare global {
   }
 }
 
+type CreepWithTask = Creep & { _denormalizedTask?: boolean };
+
 Object.defineProperty(Creep.prototype, 'task', {
   configurable: true,
 
-  get(this: Creep & { _task?: Task }): Task|undefined {
-    if (this._task !== undefined) {
-      return this._task;
+  get(this: CreepWithTask): Task|undefined {
+    if (!this._denormalizedTask) {
+      try {
+        const serialized = this.memory.task;
+        this.memory.task = deserialize(serialized);
+        log.debug('get task', serialized, '=>', this.memory.task);
+      } catch (ex) {
+        log.error('Error deserializing', this, 'task:', ex);
+        this.memory.task = idleSingleton;
+      }
+      this.memory.task.creep = this;
+      this._denormalizedTask = true;
     }
-    if (typeof (this.memory.task) === 'string') {
-      const task = this._task = Registry.deserialize(this.memory.task);
-      task.creep = this;
-      return task;
-    }
-    delete this.memory.task;
-    this._task = idleSingleton;
+    return this.memory.task;
   },
 
-  set(this: Creep & { _task?: Task }, task: Task|undefined) {
-    task = task || idleSingleton;
-    const prev = this._task;
-    if (task === prev) {
-      return;
-    }
-    this._task = task;
-    this.memory.task = Registry.serialize(task);
-    task.creep = this;
-    if (prev) {
-      delete prev.creep;
-    }
+  set(this: CreepWithTask, task: Task|undefined) {
+    this.memory.task = task || idleSingleton;
+    this.memory.task.creep = this;
+    this._denormalizedTask = true;
   }
 });
 

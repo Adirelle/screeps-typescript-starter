@@ -1,5 +1,7 @@
-import { denormalize, normalize } from './normalizer';
+// import { denormalize, normalize } from './normalizer';
+import { denormalize } from '../lib/serializer';
 import { Task, TASK_BUILD, TASK_GATHER, TASK_HARVEST, TASK_IDLE, TASK_REFILL, TASK_REPAIR, TASK_UPGRADE } from './task';
+import { idleSingleton } from './types';
 import * as Tasks from './types';
 
 const planners: Array<(room: Room) => Task[]> = [
@@ -24,26 +26,19 @@ const prototypes = {
   [TASK_UPGRADE]: Tasks.UpgradeTask.prototype
 };
 
-export function serialize(task?: Task) {
-  if (!task || task.type === TASK_IDLE) {
-    return undefined;
-  }
-  return JSON.stringify(normalize(task));
-}
-
-export function deserialize(json?: string): Task {
-  if (json === undefined) {
-    return Tasks.idleSingleton;
+export function deserialize(serialized?: any): Task {
+  if (!serialized) {
+    return idleSingleton;
   }
 
-  const plain = denormalize(JSON.parse(json));
+  const plain = denormalize(serialized);
   if (!_.isPlainObject(plain)) {
-    throw new Error(`Invalid deserialized data: ${json}`);
+    throw new Error(`Invalid deserialized data: ${serialized}`);
   }
 
   const type = plain.type;
   if (type === TASK_IDLE) {
-    return Tasks.idleSingleton;
+    return idleSingleton;
   } else if (!type || typeof type !== 'string' || !(type in prototypes)) {
     throw new Error(`Unknown task type: ${type}`);
   }

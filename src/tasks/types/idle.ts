@@ -16,6 +16,10 @@ class IdleTask implements Task {
     return TASK_IDLE;
   }
 
+  public toJSON() {
+    return undefined;
+  }
+
   public isSameAs(other: Task) {
     return other.type === TASK_IDLE;
   }
