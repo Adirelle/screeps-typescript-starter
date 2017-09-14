@@ -23,7 +23,7 @@ export class GatherTask extends TargettedTask<Creep> {
   }
 
   public isValidCreep(creep: Creep) {
-    return !creep.isFull() && !creep.isTask(TASK_HARVEST);
+    return creep.id !== this.target.id && !creep.isFull() && !creep.isTask(TASK_HARVEST);
   }
 
   public get priority() {
