@@ -107,7 +107,14 @@ export abstract class BaseTask implements Task {
   public abstract isValidCreep(creep: Creep): boolean;
 
   protected moveToTarget(): ResultCode {
-    return this.pos ? this.creep!.moveTo(this.pos) : ERR_NOT_FOUND;
+    if (!this.pos) {
+      return ERR_NOT_FOUND;
+    }
+    const creep = this.creep!;
+    return creep.moveTo(
+      this.pos,
+      { visualizePathStyle: { stroke: creep.color, strokeWidth: 0.05, lineStyle: 'dotted', opacity: 0.8 } }
+    );
   }
 
   protected abstract doCreepCompatibility(creep: Creep): number;

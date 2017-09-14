@@ -6,6 +6,7 @@ interface Memory {
 interface Creep {
   readonly energy: number;
   readonly payload: number;
+  readonly color: string;
   isFull(): boolean;
   isEmpty(): boolean;
 }

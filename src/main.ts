@@ -51,7 +51,12 @@ function manageRoom(room: Room) {
     names.sort();
     _.each(names, (name: string, i: number) => {
       const creep = Game.creeps[name];
-      room.visual.text(`${name}(${creep.type.type}): ${creep.task}`, 0, 49 - i, {align: 'left'});
+      room.visual.text(
+        `${name}(${creep.type.type}): ${creep.task}`,
+        0,
+        49 - i,
+        {align: 'left', size: 0.6, color: creep.color}
+      );
     });
   } catch (ex) {
     log.error('during displayTasks', room, ex);

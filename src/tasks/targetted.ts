@@ -50,10 +50,6 @@ export abstract class TargettedTask<T extends TaskTarget> extends BaseTask {
     this.target = this.targetFromJSON(target);
   }
 
-  protected moveToTarget(): ResultCode {
-    return this.creep!.moveTo(this.target);
-  }
-
   protected isSameTargetAs(other: TaskTarget): boolean {
     return other.id === this.target.id || other.name === this.target.name;
   }
