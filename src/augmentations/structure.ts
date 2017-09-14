@@ -1,6 +1,6 @@
 
 Structure.prototype.toString = function(this: Structure): string {
-  return `[Structure ${this.structureType}${this.pos}]`;
+  return `[${this.structureType}${this.pos}]`;
 };
 
 const _isActive = Structure.prototype.isActive;

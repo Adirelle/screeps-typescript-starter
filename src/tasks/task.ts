@@ -36,16 +36,12 @@ export abstract class BaseTask implements Task {
   }
 
   public toString(): string {
-    return `${this.type}(${this.priority})`;
+    try {
+      return `${this.type}(${this.priority})`;
+    } catch (ex) {
+      return JSON.stringify(this);
+    }
   }
-
-  public toJSON(): any {
-    const plain: any = _.mapValues(this, _.identity);
-    delete plain.creep;
-    return plain;
-  }
-
-  public abstract isValidCreep(creep: Creep): boolean;
 
   public hasValidCreep(): boolean {
     return this.creep ? this.isValidCreep(this.creep) : false;
@@ -78,6 +74,10 @@ export abstract class BaseTask implements Task {
     }
     return this.doCreepCompatibility(creep);
   }
+
+  public abstract toJSON(): any;
+  public abstract fromJSON(): any;
+  public abstract isValidCreep(creep: Creep): boolean;
 
   protected moveToTarget(): ResultCode {
     return this.pos ? this.creep!.moveTo(this.pos) : ERR_NOT_FOUND;
