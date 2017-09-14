@@ -7,19 +7,15 @@ import { log } from './lib/logger/log';
 import { spawnCreeps } from './spawner';
 import { planTasks, Task } from './tasks';
 
+log.info('Scripts bootstrapped');
+
 if (Config.USE_PROFILER) {
   Profiler.enable();
   log.debug('Profiler enabled');
 }
 
-log.info(`Scripts bootstrapped, built at ${__BUILD_TIME__}, env ${__ENV__}`);
-
-if (__REVISION__) {
-  log.info(`Revision ID: ${__REVISION__}`);
-}
-
 function mloop(): void {
-  log.debug(`========== Tick #${Game.time} ==========`);
+  log.debug(`========== Tick #${Game.time} (${__ENV__}-${__REVISION__}, ${__BUILD_TIME__}) ==========`);
   cleanCreepMemory();
   _.each(Game.rooms, manageRoom);
   _.each(Game.creeps, (creep) => {
