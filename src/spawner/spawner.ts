@@ -52,6 +52,7 @@ function displayPop(room: Room, pop: Population, missing: number) {
   );
 }
 
+function spawnMissingCreeps(room: Room, missing: BodyType[], maxSize: number, spawns: Spawn[]): void {
   const spawnCapacity = getSpawnCapacity(room);
   spawns = _.filter(spawns, (s) => !s.spawning);
   // log.debug(
