@@ -113,7 +113,7 @@ export abstract class BaseTask implements Task {
     const creep = this.creep!;
     return creep.moveTo(
       this.pos,
-      { visualizePathStyle: { stroke: creep.color, strokeWidth: 0.05, lineStyle: 'dotted', opacity: 0.8 } }
+      { visualizePathStyle: { stroke: creep.color, strokeWidth: 0.05, lineStyle: 'dotted', opacity: 0.95 } }
     );
   }
 
