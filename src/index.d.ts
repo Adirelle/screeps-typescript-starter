@@ -1,4 +1,10 @@
 
+declare namespace NodeJS {
+  interface Global {
+    log: Logger;
+  }
+}
+
 interface Memory {
   log: any;
 }
