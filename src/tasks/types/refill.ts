@@ -1,18 +1,29 @@
 import { TargettedTask } from '../targetted';
-import { TASK_REFILL } from '../task';
+import { TASK_BUILD, TASK_REFILL, TASK_REPAIR, TASK_UPGRADE } from '../task';
 
-type EnergyStructure = EnergyContainer & Structure;
+type RefillTarget = (EnergyContainer & Structure) | Creep;
 
-function isValidTarget(target: EnergyStructure) {
+const constructiveTasks = {
+  [TASK_BUILD]: true,
+  [TASK_REPAIR]: true,
+  [TASK_UPGRADE]: true
+};
+
+function isValidTarget(target: RefillTarget) {
+  if (target instanceof Creep) {
+    return !target.isFull() && constructiveTasks[target.task.type];
+  }
   return target.energyCapacity ? target.energy < target.energyCapacity : false;
 }
 
-export class RefillTask extends TargettedTask<EnergyStructure> {
-
+export class RefillTask extends TargettedTask<RefillTarget> {
   public static plan(room: Room) {
     return _.map(
-      _.filter(room.myActiveStructures, isValidTarget),
-      (s: EnergyStructure) => new RefillTask(s)
+      _.filter(
+        _.flatten([room.myActiveStructures, room.myCreeps] as RefillTarget[][]),
+        isValidTarget
+      ),
+      (s: RefillTarget) => new RefillTask(s)
     );
   }
 
@@ -21,6 +32,9 @@ export class RefillTask extends TargettedTask<EnergyStructure> {
   }
 
   public get priority() {
+    if (this.target instanceof Creep) {
+      return this.target.task.priority * 0.9;
+    }
     switch (this.target.structureType) {
       case STRUCTURE_SPAWN:
       case STRUCTURE_EXTENSION:
@@ -34,7 +48,7 @@ export class RefillTask extends TargettedTask<EnergyStructure> {
     return !creep.isEmpty();
   }
 
-  public isValidTarget(target: EnergyStructure) {
+  public isValidTarget(target: RefillTarget) {
     return isValidTarget(target);
   }
 
@@ -43,7 +57,11 @@ export class RefillTask extends TargettedTask<EnergyStructure> {
   }
 
   public doCreepCompatibility(creep: Creep) {
-    return (creep.type.type === 'mule' ? 1.0 : 0.7) * Math.pow(creep.energy / creep.carryCapacity, 2);
+    return (
+      (creep.type.type === 'mule' ? 1.0 : 0.7) *
+      Math.pow(creep.energy / creep.carryCapacity, 2)
+    );
+  }
 
   protected targetToJSON(target: RefillTarget) {
     return target.id;
