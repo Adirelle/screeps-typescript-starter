@@ -20,7 +20,7 @@ export abstract class TargettedTask<T extends TaskTarget> extends BaseTask {
     if (this.hasValidTarget()) {
       super.run();
     } else if (this.creep) {
-      this.creep.stopTask();
+      this.creep.stopTask(`Target ${this.target} is not valid anymore`);
     }
   }
 
