@@ -34,9 +34,11 @@ export class RefillTask extends TargettedTask<RefillTarget> {
 
   public get priority() {
     if (this.target instanceof Creep) {
-      return this.target.task.priority * 1.1;
+      const creep = this.target;
+      return creep.task.priority * 1.1 * Math.pow(1.0 - (creep.energy / creep.carryCapacity), 2);
     }
-    return 150 + (StructurePriority[this.target.structureType] || 100);
+    const f = 1.0 - Math.pow(this.target.energy / this.target.energyCapacity, 2);
+    return 150 + f * (StructurePriority[this.target.structureType] || 100);
   }
 
   public isValidCreep(creep: Creep) {
