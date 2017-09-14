@@ -1,4 +1,5 @@
 import './augmentations';
+import './lib/logger';
 
 import * as Profiler from 'screeps-profiler';
 
