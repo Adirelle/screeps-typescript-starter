@@ -16,7 +16,9 @@ export class RepairTask extends TargettedTask<Repairable> {
     );
   }
 
-  public readonly type = TASK_REPAIR;
+  public get type() {
+    return TASK_REPAIR;
+  }
 
   public get priority() {
     return 100 * (this.target.hits / this.target.hitsMax);

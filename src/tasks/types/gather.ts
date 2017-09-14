@@ -14,7 +14,9 @@ export class GatherTask extends TargettedTask<Creep> {
     );
   }
 
-  public readonly type = TASK_GATHER;
+  public get type() {
+    return TASK_GATHER;
+  }
 
   public isValidTarget(target: Creep) {
     return isValidTarget(target);

@@ -8,7 +8,9 @@ export class UpgradeTask extends TargettedTask<Controller> {
     return ctrl ? [new UpgradeTask(ctrl)] : [];
   }
 
-  public readonly type = TASK_UPGRADE;
+  public get type() {
+    return TASK_UPGRADE;
+  }
 
   public get priority() {
     if (this.target.ticksToDowngrade < 5000) {

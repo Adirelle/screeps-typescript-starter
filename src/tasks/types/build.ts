@@ -10,7 +10,9 @@ export class BuildTask extends TargettedTask<ConstructionSite> {
     );
   }
 
-  public readonly type = TASK_BUILD;
+  public get type() {
+    return TASK_BUILD;
+  }
 
   public get priority() {
     return 100 * Math.pow(this.target.progress / this.target.progressTotal, 2);

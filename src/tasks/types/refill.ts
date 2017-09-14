@@ -16,7 +16,9 @@ export class RefillTask extends TargettedTask<EnergyStructure> {
     );
   }
 
-  public readonly type = TASK_REFILL;
+  public get type() {
+    return TASK_REFILL;
+  }
 
   public get priority() {
     switch (this.target.structureType) {

@@ -13,7 +13,10 @@ export class HarvestTask extends TargettedTask<HarvestSpot> {
     return _.map(findHarvestSpots(room), (s) => new HarvestTask(s));
   }
 
-  public readonly type = TASK_HARVEST;
+  public get type() {
+    return TASK_HARVEST;
+  }
+
 
   public readonly priority = 1000;
 
