@@ -1,5 +1,6 @@
 import { TargettedTask } from '../targetted';
 import { getObjectByIdOrDie, TASK_BUILD, TASK_REFILL, TASK_REPAIR, TASK_UPGRADE } from '../task';
+import { StructurePriority } from './build';
 
 type RefillTarget = (EnergyContainer & Structure) | Creep;
 
@@ -33,15 +34,9 @@ export class RefillTask extends TargettedTask<RefillTarget> {
 
   public get priority() {
     if (this.target instanceof Creep) {
-      return this.target.task.priority * 0.9;
+      return this.target.task.priority * 1.1;
     }
-    switch (this.target.structureType) {
-      case STRUCTURE_SPAWN:
-      case STRUCTURE_EXTENSION:
-        return Math.max(50, 300 - 15 * this.target.room.myCreeps.length);
-      default:
-        return 50;
-    }
+    return 150 + (StructurePriority[this.target.structureType] || 100);
   }
 
   public isValidCreep(creep: Creep) {

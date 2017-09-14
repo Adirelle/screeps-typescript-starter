@@ -1,5 +1,6 @@
 import { TargettedTask } from '../targetted';
 import { getObjectByIdOrDie, TASK_REPAIR } from '../task';
+import { StructurePriority } from './build';
 
 type Repairable = Structure & HitPoints;
 
@@ -21,7 +22,7 @@ export class RepairTask extends TargettedTask<Repairable> {
   }
 
   public get priority() {
-    return 200 + 100 * (this.target.hits / this.target.hitsMax);
+    return (100 + (StructurePriority[this.target.structureType] || 100)) * (1.0 - this.target.hits / this.target.hitsMax);
   }
 
   public isValidTarget(target: Repairable) {
