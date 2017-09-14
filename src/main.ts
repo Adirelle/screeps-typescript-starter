@@ -47,11 +47,24 @@ function manageRoom(room: Room) {
   } catch (ex) {
     log.error('during manageTasks', room, ex);
   }
+  try {
+    const names = _.map(room.myCreeps, 'name');
+    names.sort();
+    _.each(names, (name: string, i: number) => {
+      const creep = Game.creeps[name];
+      room.visual.text(`${name}(${creep.type.type}): ${creep.task}`, 0, 49 - i, {align: 'left'});
+    });
+  } catch (ex) {
+    log.error('during displayTasks', room, ex);
+  }
 }
 
 function manageTasks(room: Room) {
   const [idleCreeps, busyCreeps] = _.partition(room.myCreeps, (c) => c.isIdle());
-  log.debug(room, 'creeps:', busyCreeps.length, 'busy /', idleCreeps.length, 'idle');
+  room.visual.text(
+    `Work: ${busyCreeps.length} busy / ${idleCreeps.length} idle`,
+    49, 49,  {align: 'right', opacity: 0.5}
+  );
   if (!idleCreeps.length) {
     return;
   }
@@ -94,6 +107,7 @@ function assignTasks(creeps: Creep[], tasks: Task[]): void {
   _.each(toAssign, ({ task, score }, name) => {
     const creep = Game.creeps[name!];
     creep.task = task;
+    creep.say(`${task.type}ing!`);
     log.info(`${creep.room}: assigned ${task} to ${creep} (priority=${task.priority} score=${score})`);
   });
 }
