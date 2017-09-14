@@ -100,7 +100,7 @@ function assignTasks(creeps: Creep[], tasks: Task[]): void {
       }
       let distance = 0;
       if (task.pos) {
-        const path = PathFinder.search(creep.pos, task.pos, {maxOps: 100, maxCost: 70});
+        const path = PathFinder.search(task.pos, creep.pos, {maxOps: 100});
         distance = Math.pow(path.cost / 5, 2);
       }
       const fitness = task.creepCompatibility(creep);
