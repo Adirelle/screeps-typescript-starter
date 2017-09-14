@@ -9,7 +9,7 @@ interface TaskTarget {
 export abstract class TargettedTask<T extends TaskTarget> extends BaseTask {
 
   public get pos() {
-    return this.target && this.target.pos;
+    return this.target.pos;
   }
 
   constructor(public target: T, creep?: Creep) {
