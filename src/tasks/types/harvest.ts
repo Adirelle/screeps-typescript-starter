@@ -28,6 +28,13 @@ export class HarvestTask extends TargettedTask<HarvestSpot> {
     );
   }
 
+  public toString(): string {
+    try {
+      return `${this.type}(${this.target.source},${this.target.pos},${this.priority})`;
+    } catch (ex) {
+      return JSON.stringify(this);
+    }
+  }
 
   public isValidTarget(_target: HarvestSpot): boolean {
     return true;

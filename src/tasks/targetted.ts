@@ -29,7 +29,11 @@ export abstract class TargettedTask<T extends TaskTarget> extends BaseTask {
   }
 
   public toString(): string {
-    return `${this.type}(${this.target},${this.priority})`;
+    try {
+      return `${this.type}(${this.target},${this.priority})`;
+    } catch (ex) {
+      return JSON.stringify(this);
+    }
   }
 
   public hasValidTarget(): boolean {
