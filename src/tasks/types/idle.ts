@@ -16,10 +16,6 @@ class IdleTask implements Task {
     return TASK_IDLE;
   }
 
-  public toJSON() {
-    return undefined;
-  }
-
   public isSameAs(other: Task) {
     return other.type === TASK_IDLE;
   }
@@ -34,6 +30,14 @@ class IdleTask implements Task {
 
   public isValidCreep(_creep: Creep) {
     return false;
+  }
+
+  public toJSON() {
+    return undefined;
+  }
+
+  public fromJSON(_x: any): void {
+    /* NOOP */
   }
 }
 

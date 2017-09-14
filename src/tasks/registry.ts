@@ -1,5 +1,3 @@
-// import { denormalize, normalize } from './normalizer';
-import { denormalize } from '../lib/serializer';
 import { Task, TASK_BUILD, TASK_GATHER, TASK_HARVEST, TASK_IDLE, TASK_REFILL, TASK_REPAIR, TASK_UPGRADE } from './task';
 import { idleSingleton } from './types';
 import * as Tasks from './types';
@@ -26,21 +24,21 @@ const prototypes = {
   [TASK_UPGRADE]: Tasks.UpgradeTask.prototype
 };
 
-export function deserialize(serialized?: any): Task {
-  if (!serialized) {
+export function deserializeTask(data: any): Task {
+  if (!data) {
     return idleSingleton;
   }
-
-  const plain = denormalize(serialized);
-  if (!_.isPlainObject(plain)) {
-    throw new Error(`Invalid deserialized data: ${serialized}`);
+  if (!_.isPlainObject(data)) {
+    throw new Error(`Invalid serialized data: ${data}`);
   }
 
-  const type = plain.type;
+  const type = data.type;
   if (type === TASK_IDLE) {
     return idleSingleton;
   } else if (!type || typeof type !== 'string' || !(type in prototypes)) {
     throw new Error(`Unknown task type: ${type}`);
   }
-  return _.create(prototypes[type], plain);
+  const task = _.create(prototypes[type]);
+  task.fromJSON(data);
+  return task;
 }

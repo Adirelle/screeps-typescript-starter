@@ -28,7 +28,18 @@ export abstract class TargettedTask<T extends {pos: RoomPosition}> extends BaseT
 
   public abstract isValidTarget(_target: T): boolean;
 
+  public toJSON(): any {
+    return { type: this.type, target: this.targetToJSON(this.target) };
+  }
+
+  public fromJSON({target}: any): void {
+    this.target = this.targetFromJSON(target);
+  }
+
   protected moveToTarget(): ResultCode {
     return this.creep!.moveTo(this.target);
   }
+
+  protected abstract targetToJSON(target: T): any;
+  protected abstract targetFromJSON(data: any): T;
 }

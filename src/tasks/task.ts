@@ -21,6 +21,9 @@ export interface Task {
   isValidCreep(creep: Creep): boolean;
   isSameAs(other: Task): boolean;
   toString(): string;
+
+  toJSON(): any;
+  fromJSON(data: any): void;
 }
 
 export abstract class BaseTask implements Task {
@@ -75,8 +78,14 @@ export abstract class BaseTask implements Task {
     return this.doCreepCompatibility(creep);
   }
 
-  public abstract toJSON(): any;
-  public abstract fromJSON(): any;
+  public toJSON(): any {
+    return { type: this.type };
+  }
+
+  public fromJSON(_x: any): void {
+    /* NOOP */
+  }
+
   public abstract isValidCreep(creep: Creep): boolean;
 
   protected moveToTarget(): ResultCode {

@@ -34,4 +34,12 @@ export class UpgradeTask extends TargettedTask<Controller> {
   protected doRun() {
     return this.creep!.upgradeController(this.target);
   }
+
+  protected targetToJSON(target: Controller) {
+    return target.room.name;
+  }
+
+  protected targetFromJSON(roomName: any) {
+    return Game.rooms[roomName].controller!;
+  }
 }

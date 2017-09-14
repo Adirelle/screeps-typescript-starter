@@ -39,4 +39,12 @@ export class RepairTask extends TargettedTask<Repairable> {
   protected doRun() {
     return this.creep!.repair(this.target);
   }
+
+  protected targetToJSON(target: Repairable) {
+    return target.id;
+  }
+
+  protected targetFromJSON(id: any) {
+    return Game.getObjectByIdOrDie<Repairable>(id);
+  }
 }

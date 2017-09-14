@@ -44,5 +44,12 @@ export class RefillTask extends TargettedTask<EnergyStructure> {
 
   public doCreepCompatibility(creep: Creep) {
     return (creep.type.type === 'mule' ? 1.0 : 0.7) * Math.pow(creep.energy / creep.carryCapacity, 2);
+
+  protected targetToJSON(target: RefillTarget) {
+    return target.id;
+  }
+
+  protected targetFromJSON(id: any) {
+    return Game.getObjectByIdOrDie<RefillTarget>(id);
   }
 }

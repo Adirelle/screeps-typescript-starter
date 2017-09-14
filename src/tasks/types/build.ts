@@ -39,4 +39,12 @@ export class BuildTask extends TargettedTask<ConstructionSite> {
   protected doRun(): ResultCode {
     return this.creep!.build(this.target);
   }
+
+  protected targetToJSON(target: ConstructionSite): any {
+    return target.id;
+  }
+
+  protected targetFromJSON(data: any): ConstructionSite {
+    return Game.getObjectByIdOrDie<ConstructionSite>(data);
+  }
 }

@@ -36,5 +36,12 @@ export class GatherTask extends TargettedTask<Creep> {
 
   protected doCreepCompatibility(creep: Creep) {
     return (creep.type.type === 'mule' ? 1.0 : 0.7) *  (1.0 - Math.pow(creep.payload / creep.carryCapacity, 2));
+
+  protected targetToJSON(target: Creep): any {
+    return target.name;
+  }
+
+  protected targetFromJSON(data: any): Creep {
+    return Game.creeps[data];
   }
 }
