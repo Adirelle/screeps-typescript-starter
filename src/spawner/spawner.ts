@@ -10,7 +10,7 @@ export function spawnCreeps(room: Room): void {
   const spawns = _.filter(room.myActiveStructures, (s) => s.structureType === 'spawn') as Spawn[];
   const pop = countCreepsByType(room.myCreeps);
   const missing = listMissingTypes(spawns.length, pop);
-  log.debug(`${room} population: ${pop.TOTAL}/${pop.TOTAL + missing.length} creep(s)`);
+  displayPop(room, pop, missing.length);
   if (missing.length > 0) {
     spawnMissingCreeps(room, missing, Math.max(1,  pop.TOTAL), spawns);
   }
@@ -45,7 +45,14 @@ function listMissingTypes(roomSize: number, pop: Population): BodyType[] {
   return missing;
 }
 
-function spawnMissingCreeps(room: Room, missing: BodyType[], maxSize: number, spawns: Spawn[]): void {
+function displayPop(room: Room, pop: Population, missing: number) {
+  const popStr = _.map(BODY_TYPES, ({ type }) => `${pop[type]} ${type}(s)`).join(' + ');
+  room.visual.text(
+    `Pop.: ${popStr} / ${pop.TOTAL + missing}`,
+    49, 48, {align: 'right', opacity: 0.5}
+  );
+}
+
   const spawnCapacity = getSpawnCapacity(room);
   spawns = _.filter(spawns, (s) => !s.spawning);
   // log.debug(
