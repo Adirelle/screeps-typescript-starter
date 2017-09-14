@@ -2,12 +2,12 @@ import { TargettedTask } from '../targetted';
 import { getObjectByIdOrDie, TASK_BUILD } from '../task';
 
 export const StructurePriority: { [type: string]: number } = {
+  [STRUCTURE_ROAD]: 700,
   [STRUCTURE_TOWER]: 600,
   [STRUCTURE_RAMPART]: 500,
   [STRUCTURE_WALL]: 500,
   [STRUCTURE_SPAWN]: 400,
-  [STRUCTURE_EXTENSION]: 200,
-  [STRUCTURE_ROAD]: 150
+  [STRUCTURE_EXTENSION]: 200
   // [STRUCTURE_LINK]: 100,
   // [STRUCTURE_STORAGE]: 100,
   // [STRUCTURE_OBSERVER]: 100,
