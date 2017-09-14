@@ -1,5 +1,3 @@
-import { log } from '../lib/logger/log';
-
 export type TaskType = 'build'|'gather'|'harvest'|'idle'|'refill'|'repair'|'upgrade';
 
 export const TASK_BUILD: TaskType = 'build';

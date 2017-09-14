@@ -1,4 +1,3 @@
-import { log } from '../lib/logger/log';
 import { BODY_TYPES, BodyType } from './body_types';
 
 interface Population {

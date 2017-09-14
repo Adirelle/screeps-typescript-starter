@@ -3,7 +3,6 @@ import './augmentations';
 import * as Profiler from 'screeps-profiler';
 
 import * as Config from './config/config';
-import { log } from './lib/logger/log';
 import { spawnCreeps } from './spawner';
 import { planTasks, Task } from './tasks';
 
