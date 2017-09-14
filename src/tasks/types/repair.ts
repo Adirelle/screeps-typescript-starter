@@ -1,5 +1,5 @@
 import { TargettedTask } from '../targetted';
-import { TASK_REPAIR } from '../task';
+import { getObjectByIdOrDie, TASK_REPAIR } from '../task';
 
 type Repairable = Structure & HitPoints;
 
@@ -45,6 +45,6 @@ export class RepairTask extends TargettedTask<Repairable> {
   }
 
   protected targetFromJSON(id: any) {
-    return Game.getObjectByIdOrDie<Repairable>(id);
+    return getObjectByIdOrDie<Repairable>(id);
   }
 }

@@ -93,3 +93,11 @@ export abstract class BaseTask implements Task {
   protected abstract doCreepCompatibility(creep: Creep): number;
   protected abstract doRun(): ResultCode;
 }
+
+export function getObjectByIdOrDie<T>(id: string): T {
+  const object = Game.getObjectById<T>(id);
+  if (object === null) {
+    throw new Error(`Could not found game object #${id}`);
+  }
+  return object;
+}

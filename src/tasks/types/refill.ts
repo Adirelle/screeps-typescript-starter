@@ -1,5 +1,5 @@
 import { TargettedTask } from '../targetted';
-import { TASK_BUILD, TASK_REFILL, TASK_REPAIR, TASK_UPGRADE } from '../task';
+import { getObjectByIdOrDie, TASK_BUILD, TASK_REFILL, TASK_REPAIR, TASK_UPGRADE } from '../task';
 
 type RefillTarget = (EnergyContainer & Structure) | Creep;
 
@@ -68,6 +68,6 @@ export class RefillTask extends TargettedTask<RefillTarget> {
   }
 
   protected targetFromJSON(id: any) {
-    return Game.getObjectByIdOrDie<RefillTarget>(id);
+    return getObjectByIdOrDie<RefillTarget>(id);
   }
 }

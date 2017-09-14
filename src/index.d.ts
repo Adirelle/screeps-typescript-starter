@@ -1,8 +1,4 @@
 
-interface Game {
-  getObjectByIdOrDie<T>(id: string): T;
-}
-
 interface Memory {
   log: any;
 }

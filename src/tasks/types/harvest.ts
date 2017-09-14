@@ -1,5 +1,5 @@
 import { TargettedTask } from '../targetted';
-import { Task, TASK_HARVEST } from '../task';
+import { getObjectByIdOrDie, Task, TASK_HARVEST } from '../task';
 
 interface HarvestSpot {
   pos: RoomPosition;
@@ -73,7 +73,7 @@ export class HarvestTask extends TargettedTask<HarvestSpot> {
   }
 
   protected targetFromJSON({source, x, y}: any) {
-    const sourceObj = Game.getObjectByIdOrDie<Source>(source);
+    const sourceObj = getObjectByIdOrDie<Source>(source);
     return {source: sourceObj, pos: new RoomPosition(x, y, source.room.name)};
   }
 }

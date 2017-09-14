@@ -1,5 +1,5 @@
 import { TargettedTask } from '../targetted';
-import { TASK_BUILD } from '../task';
+import { getObjectByIdOrDie, TASK_BUILD } from '../task';
 
 export class BuildTask extends TargettedTask<ConstructionSite> {
 
@@ -45,6 +45,6 @@ export class BuildTask extends TargettedTask<ConstructionSite> {
   }
 
   protected targetFromJSON(data: any): ConstructionSite {
-    return Game.getObjectByIdOrDie<ConstructionSite>(data);
+    return getObjectByIdOrDie<ConstructionSite>(data);
   }
 }
