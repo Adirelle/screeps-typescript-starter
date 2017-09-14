@@ -2,7 +2,6 @@ import { TargettedTask } from '../targetted';
 import { TASK_HARVEST } from '../task';
 
 interface HarvestSpot {
-  id: string;
   pos: RoomPosition;
   source: Source;
 }
@@ -82,7 +81,7 @@ function _findHarvestSpots(room: Room): HarvestSpot[] {
         ),
         ({ x, y, terrain }: LookAtResultWithPos) => {
           if (terrain === 'swamp' || terrain === 'plain') {
-            spots.push({id: `${source.id}-${x}-${y}`, source, pos: new RoomPosition(x, y, room.name)});
+            spots.push({source, pos: new RoomPosition(x, y, room.name)});
           }
         }
       );
