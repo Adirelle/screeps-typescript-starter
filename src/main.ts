@@ -22,8 +22,7 @@ function mloop(): void {
     try {
       creep.task.run();
     } catch (ex) {
-      log.error('During task run:', creep, creep.task, ex);
-      creep.stopTask();
+      creep.stopTask(`error ${ex}`);
     }
   });
 }

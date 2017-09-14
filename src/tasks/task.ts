@@ -52,11 +52,11 @@ export abstract class BaseTask implements Task {
 
   public run(): void {
     if (!this.creep) {
+      log.warning(`${this} has no creep !`);
       return;
     }
     if (!this.hasValidCreep()) {
-      log.debug(this, 'invalid creep:', this.creep);
-      this.creep.stopTask();
+      this.creep.stopTask('does not fit the requirements anymore');
       return;
     }
     let result = this.doRun();
@@ -67,7 +67,7 @@ export abstract class BaseTask implements Task {
       }
     }
     if (result !== OK) {
-      this.creep.stopTask();
+      this.creep.stopTask(`action failed (${result})`);
     }
   }
 

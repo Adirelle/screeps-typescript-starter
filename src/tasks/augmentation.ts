@@ -6,7 +6,7 @@ import { idleSingleton } from './types';
 declare global {
   interface Creep {
     task: Task;
-    stopTask(): void;
+    stopTask(reason?: string): void;
     isIdle(): boolean;
     isTask(type: TaskType): boolean;
   }
@@ -40,7 +40,10 @@ Object.defineProperty(Creep.prototype, 'task', {
   }
 });
 
-Creep.prototype.stopTask = function(this: Creep): void {
+Creep.prototype.stopTask = function(this: Creep, reason: string = 'for reasons'): void {
+  if (!this.isIdle()) {
+    log.debug(`${this} stops to ${this.task}: ${reason}`);
+  }
   this.task = idleSingleton;
 };
 
