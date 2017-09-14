@@ -12,7 +12,7 @@ export class RepairTask extends TargettedTask<Repairable> {
 
   public static plan(room: Room): RepairTask[] {
     return  _.map(
-      _.filter(room.myActiveStructures, isValidTarget),
+      room.find<Repairable>(FIND_STRUCTURES, {filter: isValidTarget}),
       (s) => new RepairTask(s)
     );
   }
