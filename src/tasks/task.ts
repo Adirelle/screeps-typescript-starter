@@ -1,4 +1,4 @@
-export type TaskType = 'build'|'gather'|'harvest'|'idle'|'refill'|'repair'|'upgrade';
+export type TaskType = 'build'|'gather'|'harvest'|'idle'|'refill'|'repair'|'upgrade'|'pickup'|'heal';
 
 export const TASK_BUILD: TaskType = 'build';
 export const TASK_GATHER: TaskType = 'gather';
@@ -7,6 +7,8 @@ export const TASK_IDLE: TaskType = 'idle';
 export const TASK_REFILL: TaskType = 'refill';
 export const TASK_REPAIR: TaskType = 'repair';
 export const TASK_UPGRADE: TaskType = 'upgrade';
+export const TASK_PICKUP: TaskType = 'pickup';
+export const TASK_HEAL: TaskType = 'heal';
 
 export interface Task {
   readonly type: TaskType;

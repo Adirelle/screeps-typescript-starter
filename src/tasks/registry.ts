@@ -1,4 +1,4 @@
-import { Task, TASK_BUILD, TASK_GATHER, TASK_HARVEST, TASK_IDLE, TASK_REFILL, TASK_REPAIR, TASK_UPGRADE } from './task';
+import { Task, TASK_BUILD, TASK_GATHER, TASK_HARVEST, TASK_IDLE, TASK_PICKUP, TASK_REFILL, TASK_REPAIR, TASK_UPGRADE } from './task';
 import { idleSingleton } from './types';
 import * as Tasks from './types';
 
@@ -8,7 +8,8 @@ const planners: Array<(room: Room) => Task[]> = [
   Tasks.HarvestTask.plan,
   Tasks.RefillTask.plan,
   Tasks.RepairTask.plan,
-  Tasks.UpgradeTask.plan
+  Tasks.UpgradeTask.plan,
+  Tasks.PickupTask.plan
 ];
 
 export function planTasks(room: Room) {
@@ -21,7 +22,8 @@ const prototypes = {
   [TASK_HARVEST]: Tasks.HarvestTask.prototype,
   [TASK_REFILL]: Tasks.RefillTask.prototype,
   [TASK_REPAIR]: Tasks.RepairTask.prototype,
-  [TASK_UPGRADE]: Tasks.UpgradeTask.prototype
+  [TASK_UPGRADE]: Tasks.UpgradeTask.prototype,
+  [TASK_PICKUP]: Tasks.PickupTask.prototype
 };
 
 export function deserializeTask(data: any): Task {
