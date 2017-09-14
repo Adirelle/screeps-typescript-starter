@@ -11,7 +11,8 @@ export function spawnCreeps(room: Room): void {
   const missing = listMissingTypes(spawns.length, pop);
   displayPop(room, pop, missing.length);
   if (missing.length > 0) {
-    spawnMissingCreeps(room, missing, Math.max(1,  pop.TOTAL), spawns);
+    const maxSize = Math.max(1, Math.ceil(pop.TOTAL / missing.length));
+    spawnMissingCreeps(room, missing, maxSize, spawns);
   }
 }
 
@@ -36,7 +37,6 @@ function listMissingTypes(roomSize: number, pop: Population): BodyType[] {
   const missing: BodyType[] = [];
   _.each(BODY_TYPES, ({type, num, body, priority}) => {
     const expected = roomSize * num;
-    // log.debug(`${type}: pop=${pop[type]}, expected=${expected}`);
     for (let current = pop[type]; current < expected; current++) {
       missing.push(new BodyType(type, num, priority * (1.0 - current / expected), body));
     }
@@ -55,10 +55,6 @@ function displayPop(room: Room, pop: Population, missing: number) {
 function spawnMissingCreeps(room: Room, missing: BodyType[], maxSize: number, spawns: Spawn[]): void {
   const spawnCapacity = getSpawnCapacity(room);
   spawns = _.filter(spawns, (s) => !s.spawning);
-  // log.debug(
-  //  `${room}: ${missing.length} creep(s) to spawn, ${spawns.length} available spawn(s), ${spawnCapacity}`,
-  //  `spawn capacity, ${maxSize} maximum size`
-  // );
   if (!spawns.length) {
     return;
   }
