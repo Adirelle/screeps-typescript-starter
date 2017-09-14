@@ -33,7 +33,7 @@ export abstract class BaseTask implements Task {
   constructor(public creep?: Creep) {}
 
   public isSameAs(other: Task): boolean {
-    return this.type === other.type;
+    return this.type === other.type && this.pos === other.pos;
   }
 
   public toString(): string {

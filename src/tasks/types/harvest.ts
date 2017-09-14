@@ -1,5 +1,5 @@
 import { TargettedTask } from '../targetted';
-import { TASK_HARVEST } from '../task';
+import { Task, TASK_HARVEST } from '../task';
 
 interface HarvestSpot {
   pos: RoomPosition;
@@ -18,6 +18,14 @@ export class HarvestTask extends TargettedTask<HarvestSpot> {
 
   public get priority() {
     return Math.min(300, 600 * this.target.source.energy / this.target.source.energyCapacity);
+  }
+
+  public isSameAs(other: Task): boolean {
+    return (other instanceof HarvestTask
+      && other.target.source.id === this.target.source.id
+      && other.target.pos.x === this.target.pos.x
+      && other.target.pos.y === this.target.pos.y
+    );
   }
 
 

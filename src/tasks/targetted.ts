@@ -1,6 +1,12 @@
-import { BaseTask } from './task';
+import { BaseTask, Task } from './task';
 
-export abstract class TargettedTask<T extends {pos: RoomPosition}> extends BaseTask {
+interface TaskTarget {
+  id?: string;
+  name?: string;
+  pos: RoomPosition;
+}
+
+export abstract class TargettedTask<T extends TaskTarget> extends BaseTask {
 
   public get pos() {
     return this.target && this.target.pos;
@@ -16,6 +22,10 @@ export abstract class TargettedTask<T extends {pos: RoomPosition}> extends BaseT
     } else if (this.creep) {
       this.creep.stopTask();
     }
+  }
+
+  public isSameAs(other: Task): boolean {
+    return super.isSameAs(other) && other instanceof TargettedTask && this.isSameTargetAs(other.target);
   }
 
   public toString(): string {
@@ -38,6 +48,10 @@ export abstract class TargettedTask<T extends {pos: RoomPosition}> extends BaseT
 
   protected moveToTarget(): ResultCode {
     return this.creep!.moveTo(this.target);
+  }
+
+  protected isSameTargetAs(other: TaskTarget): boolean {
+    return other.id === this.target.id || other.name === this.target.name;
   }
 
   protected abstract targetToJSON(target: T): any;
