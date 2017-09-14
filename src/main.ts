@@ -39,12 +39,12 @@ function manageRoom(room: Room) {
   try {
     spawnCreeps(room);
   } catch (ex) {
-    log.error('during spawnCreeps', room, ex);
+    log.error('during spawnCreeps', ex);
   }
   try {
     manageTasks(room);
   } catch (ex) {
-    log.error('during manageTasks', room, ex);
+    log.error('during manageTasks', ex);
   }
   try {
     const names = _.map(room.myCreeps, 'name');
@@ -59,7 +59,7 @@ function manageRoom(room: Room) {
       );
     });
   } catch (ex) {
-    log.error('during displayTasks', room, ex);
+    log.error('during displayTasks', ex);
   }
 }
 

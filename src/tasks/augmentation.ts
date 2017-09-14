@@ -40,7 +40,11 @@ Object.defineProperty(Creep.prototype, 'task', {
 
 Creep.prototype.stopTask = function(this: Creep, reason: string = 'for reasons'): void {
   if (!this.isIdle()) {
-    log.debug(`${this} stops to ${this.task}: ${reason}`);
+    try {
+      log.debug(`${this} stopped to ${this.task.type}: ${reason}`);
+    } catch (_ex) {
+      log.error(`unknown stopped to ${this.task.type}: ${reason}`);
+    }
   }
   this.task = idleSingleton;
 };
