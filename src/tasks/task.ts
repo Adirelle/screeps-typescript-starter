@@ -24,6 +24,24 @@ export interface Task {
   fromJSON(data: any): void;
 }
 
+export const ErrorMessages: { [code: number]: string } = {
+  [OK]: 'ok',
+  [ERR_NOT_OWNER]: 'not owner',
+  [ERR_NO_PATH]: 'no path',
+  [ERR_NAME_EXISTS]: 'name exists',
+  [ERR_BUSY]: 'busy',
+  [ERR_NOT_FOUND]: 'not found',
+  [ERR_NOT_ENOUGH_ENERGY]: 'not enough energy/resources/extensions',
+  [ERR_INVALID_TARGET]: 'invalid target',
+  [ERR_FULL]: 'full',
+  [ERR_NOT_IN_RANGE]: 'not in range',
+  [ERR_INVALID_ARGS]: 'invalid args',
+  [ERR_TIRED]: 'tired',
+  [ERR_NO_BODYPART]: 'missing required bodypart',
+  [ERR_RCL_NOT_ENOUGH]: 'RCL too low',
+  [ERR_GCL_NOT_ENOUGH]: 'GCL too low'
+};
+
 export abstract class BaseTask implements Task {
 
   public abstract get type(): TaskType;
@@ -65,7 +83,7 @@ export abstract class BaseTask implements Task {
       }
     }
     if (result !== OK) {
-      this.creep.stopTask(`action failed (${result})`);
+      this.creep.stopTask(`action failed (${ErrorMessages[result]})`);
     }
   }
 
