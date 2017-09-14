@@ -17,8 +17,10 @@ export class HarvestTask extends TargettedTask<HarvestSpot> {
     return TASK_HARVEST;
   }
 
+  public get priority() {
+    return Math.min(300, 600 * this.target.source.energy / this.target.source.energyCapacity);
+  }
 
-  public readonly priority = 1000;
 
   public isValidTarget(_target: HarvestSpot): boolean {
     return true;

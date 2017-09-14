@@ -15,7 +15,13 @@ export class BuildTask extends TargettedTask<ConstructionSite> {
   }
 
   public get priority() {
-    return 100 * Math.pow(this.target.progress / this.target.progressTotal, 2);
+    switch (this.target.structureType) {
+      case STRUCTURE_ROAD:
+        const terrain = this.target.pos.lookFor<string>(LOOK_TERRAIN);
+        return terrain[0] === 'swamp' ? 400 : 150;
+      default:
+        return 100;
+    }
   }
 
   public isValidTarget(target: ConstructionSite): boolean {

@@ -21,7 +21,7 @@ export class RepairTask extends TargettedTask<Repairable> {
   }
 
   public get priority() {
-    return 100 * (this.target.hits / this.target.hitsMax);
+    return 200 + 100 * (this.target.hits / this.target.hitsMax);
   }
 
   public isValidTarget(target: Repairable) {

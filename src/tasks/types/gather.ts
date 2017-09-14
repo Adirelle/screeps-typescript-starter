@@ -27,7 +27,7 @@ export class GatherTask extends TargettedTask<Creep> {
   }
 
   public get priority() {
-    return 100.0 * this.target.energy / this.target.carryCapacity;
+    return 100.0 * Math.pow(this.target.energy / this.target.carryCapacity, 2);
   }
 
   protected doRun() {

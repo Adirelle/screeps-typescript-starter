@@ -24,9 +24,9 @@ export class RefillTask extends TargettedTask<EnergyStructure> {
     switch (this.target.structureType) {
       case STRUCTURE_SPAWN:
       case STRUCTURE_EXTENSION:
-        return 1000 - 20 * this.target.room.myCreeps.length;
+        return Math.max(50, 300 - 15 * this.target.room.myCreeps.length);
       default:
-        return this.target.energyCapacity - this.target.energy;
+        return 50;
     }
   }
 
