@@ -40,7 +40,7 @@ export class RefillTask extends TargettedTask<RefillTarget> {
   }
 
   public isValidCreep(creep: Creep) {
-    return !creep.isEmpty();
+    return creep.id !== this.target.id && !creep.isEmpty();
   }
 
   public isValidTarget(target: RefillTarget) {
