@@ -1,13 +1,14 @@
 import { log } from '../lib/logger/log';
+
 export type TaskType = 'build'|'gather'|'harvest'|'idle'|'refill'|'repair'|'upgrade';
 
-export const TASK_BUILD = 'build';
-export const TASK_GATHER = 'gather';
-export const TASK_HARVEST = 'harvest';
-export const TASK_IDLE = 'idle';
-export const TASK_REFILL = 'refill';
-export const TASK_REPAIR = 'repair';
-export const TASK_UPGRADE = 'upgrade';
+export const TASK_BUILD: TaskType = 'build';
+export const TASK_GATHER: TaskType = 'gather';
+export const TASK_HARVEST: TaskType = 'harvest';
+export const TASK_IDLE: TaskType = 'idle';
+export const TASK_REFILL: TaskType = 'refill';
+export const TASK_REPAIR: TaskType = 'repair';
+export const TASK_UPGRADE: TaskType = 'upgrade';
 
 export interface Task {
   readonly type: TaskType;
