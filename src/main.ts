@@ -6,6 +6,7 @@ import * as Profiler from 'screeps-profiler';
 import * as Config from './config/config';
 import { spawnCreeps } from './spawner';
 import { manageTasks } from './tasks';
+import { manageTowers } from './towerManager';
 
 log.info('Scripts bootstrapped');
 
@@ -47,7 +48,9 @@ function manageRoom(room: Room) {
     log.error('during manageTasks', ex);
   }
   try {
+    manageTowers(room);
   } catch (ex) {
+    log.error('during manageTowers', ex);
   }
   try {
     displayTasks(room);
