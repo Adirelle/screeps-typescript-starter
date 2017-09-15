@@ -8,6 +8,10 @@ Object.defineProperties(Creep.prototype, {
     configurable: true,
     get(this: Creep): number { return this.carry.energy || 0; }
   },
+  energyCapacity: {
+    configurable: true,
+    get(this: Creep): number { return this.energy + this.carryCapacity - this.payload; }
+  },
   payload: {
     configurable: true,
     get(this: Creep): number { return _.sum(this.carry) || 0; }
