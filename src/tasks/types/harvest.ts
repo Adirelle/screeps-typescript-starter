@@ -54,14 +54,15 @@ export class HarvestTask extends TargettedTask<HarvestSpot> {
   }
 
   public fromJSON({sourceId, x, y}: any) {
-    const source = Game.getObjectById<Source>(sourceId)!;
+    const source = getObjectByIdOrDie<Source>(sourceId);
     this.target = {
       pos: new RoomPosition(x, y, source.room.name),
       source
     };
   }
+
   protected doCreepCompatibility(creep: Creep): number {
-    return 1.0 - Math.pow(creep.energy / creep.carryCapacity, 2);
+    return 1.0 - Math.pow(creep.energy / creep.energyCapacity, 2);
   }
 
   protected doRun(): ResultCode {
