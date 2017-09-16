@@ -23,32 +23,27 @@ function manageTower(tower: Tower) {
 
 function attackHostiles(tower: Tower) {
   const hostile = tower.pos.findClosestByRange<Creep>(FIND_HOSTILE_CREEPS);
-  log.debug(tower, 'attackHostiles', hostile);
   if (!hostile) {
-    log.debug(tower, 'No hostile creep');
     return false;
   }
-  log.debug(tower, 'attacks', hostile);
   return tower.attack(hostile) === OK;
 }
 
 function healFriends(tower: Tower) {
   const friend = tower.pos.findClosestByRange<Creep>(tower.room.myCreeps, {filter: (c: Creep) => c.hits < c.hitsMax});
   if (!friend) {
-    log.debug(tower, 'No wounded creep');
     return false;
   }
-  log.debug(tower, 'heals', friend);
   return tower.heal(friend) === OK;
 }
 
-function repairStructs(tower: Tower) {
+function repairStructs(tower: Tower): boolean {
   const struct = tower.pos.findClosestByRange<Structure>(
     FIND_STRUCTURES,
-    {filter: (s: Structure) => isMineOrNeutral(s) && s.hits < s.hitsMax}
+    {filter: (s: Structure) => isMineOrNeutral(s) && s.hits < Math.min(s.hitsMax, 1e4)}
   );
   if (!struct) {
-    log.debug(tower, 'No structure to repair');
+    return false;
   }
   return tower.repair(struct) === OK;
 }

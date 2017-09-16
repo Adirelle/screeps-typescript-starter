@@ -23,7 +23,7 @@ export class RepairTask extends TargettedTask<Repairable> {
 
   public get priority() {
     const prio = StructurePriority[this.target.structureType] || 100;
-    const f = Math.min(1, this.target.hits / Math.min(this.target.hitsMax, 1e5));
+    const f = Math.min(1, this.target.hits / Math.min(this.target.hitsMax, 1e4));
     return 100 + prio * (1.0 - f);
   }
 
