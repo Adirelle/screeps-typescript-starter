@@ -36,14 +36,17 @@ function assignTasks(creeps: Creep[], tasks: Task[]): void {
       if (!task.isValidCreep(creep)) {
         return;
       }
+      const fitness = task.creepCompatibility(creep);
+      if (fitness <= 0) {
+        return;
+      }
       let distance = 0;
       if (task.pos) {
         const path = PathFinder.search(task.pos, creep.pos, {maxOps: 100});
         distance = Math.pow(path.cost / 5, 2);
       }
-      const fitness = task.creepCompatibility(creep);
       const score = (fitness * task.priority) - distance;
-      if (fitness > 0 && (!toAssign[name] || toAssign[name].score < score)) {
+      if ((!toAssign[name] || toAssign[name].score < score)) {
         toAssign[name] = { task, score };
       }
     });
