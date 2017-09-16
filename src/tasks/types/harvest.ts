@@ -44,23 +44,6 @@ export class HarvestTask extends TargettedTask<HarvestSpot> {
     return creep.type.type === 'worker' && !creep.isFull();
   }
 
-  public toJSON() {
-    return {
-      sourceId: this.target.source.id,
-      type: this.type,
-      x: this.target.pos.x,
-      y: this.target.pos.y
-    };
-  }
-
-  public fromJSON({sourceId, x, y}: any) {
-    const source = getObjectByIdOrDie<Source>(sourceId);
-    this.target = {
-      pos: new RoomPosition(x, y, source.room.name),
-      source
-    };
-  }
-
   protected doCreepCompatibility(creep: Creep): number {
     return 1.0 - Math.pow(creep.energy / creep.energyCapacity, 2);
   }
@@ -75,7 +58,7 @@ export class HarvestTask extends TargettedTask<HarvestSpot> {
 
   protected targetFromJSON({source, x, y}: any) {
     const sourceObj = getObjectByIdOrDie<Source>(source);
-    return {source: sourceObj, pos: new RoomPosition(x, y, source.room.name)};
+    return {source: sourceObj, pos: new RoomPosition(x, y, sourceObj.room.name)};
   }
 }
 
