@@ -40,22 +40,26 @@ function manageRoom(room: Room) {
   try {
     spawnCreeps(room);
   } catch (ex) {
-    log.error('during spawnCreeps', ex);
+    log.error('during spawnCreeps');
+    log.trace(ex);
   }
   try {
     manageTasks(room);
   } catch (ex) {
-    log.error('during manageTasks', ex);
+    log.error('during manageTasks');
+    log.trace(ex);
   }
   try {
     manageTowers(room);
   } catch (ex) {
-    log.error('during manageTowers', ex);
+    log.error('during manageTowers');
+    log.trace(ex);
   }
   try {
     displayTasks(room);
   } catch (ex) {
-    log.error('during displayTasks', ex);
+    log.error('during displayTasks');
+    log.trace(ex);
   }
 }
 
