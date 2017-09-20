@@ -31,6 +31,6 @@ export class BodyType {
 }
 
 export const BODY_TYPES: { readonly [type: string]: BodyType } = {
-  [BodyTypeName.MULE]: new BodyType(BodyTypeName.MULE, 3, 90, [MOVE, CARRY]),
-  [BodyTypeName.WORKER]: new BodyType(BodyTypeName.WORKER, 12, 100, [MOVE, MOVE, CARRY, WORK])
+  // [BodyTypeName.MULE]: new BodyType(BodyTypeName.MULE, 2, 90, [MOVE, CARRY]),
+  [BodyTypeName.WORKER]: new BodyType(BodyTypeName.WORKER, 10, 100, [MOVE, MOVE, CARRY, WORK])
 };
