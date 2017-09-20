@@ -18,8 +18,9 @@ class Manager {
     this.pickup,
     this.harvest,
     this.withdraw,
-    this.build,
     this.refill,
+    this.build,
+    this.refillLowerPrio,
     this.upgrade
   ];
 
@@ -34,13 +35,19 @@ class Manager {
 
   public manage(room: Room) {
     this.room = room;
-    this.creeps = Array.from(room.myCreeps);
+    this.creeps = _.each(room.myCreeps, (c) => {
+      delete c.working;
+      if (c.energy === 0) {
+        c.memory.charging = true;
+      } else if (c.energy === c.energyCapacity) {
+        c.memory.charging = false;
+      }
+    });
     if (!this.creeps.length) {
       return;
     }
     _.sortBy(this.creeps, 'name');
     this.creepsLeft = this.creeps.length;
-    _.each(this.creeps, (c) => delete c.working);
 
     this.task = '-';
     this.debug('start');
@@ -129,7 +136,7 @@ class Manager {
     this.doTask<Controller>(
       [ctrl],
       (c, t) => c.upgradeController(t),
-      (c) => c.energy > 0 && (c.energy === c.energyCapacity || c.memory.task === 'urgentUpgrade'),
+      (c) => !c.memory.charging,
       true
     );
   }
@@ -138,7 +145,7 @@ class Manager {
     this.doTask(
       this.room.find<Resource>(FIND_DROPPED_RESOURCES, {filter: (r: Resource) => r.resourceType === RESOURCE_ENERGY}),
       (c, t) => c.pickup(t),
-      (c) => c.energy < c.energyCapacity && (c.energy === 0 || c.memory.task === 'pickup'),
+      (c) => c.memory.charging,
       true
     );
   }
@@ -149,7 +156,7 @@ class Manager {
     this.doTask(
       spots,
       (c, t) => c.harvest(t.source),
-      (c) => c.energy < c.energyCapacity && (c.energy === 0 || c.memory.task === 'harvest'),
+      (c) => c.memory.charging,
       true
     );
   }
@@ -161,7 +168,7 @@ class Manager {
           (s) => s.structureType === STRUCTURE_LINK && s.energy > 0
       ),
       (c, t) => c.withdraw(t, RESOURCE_ENERGY),
-      (c) => c.energy === 0
+      (c) => c.memory.charging
     );
   }
 
@@ -172,7 +179,7 @@ class Manager {
     this.doTask<EnergizedStructure>(
       structs,
       (c, t) => c.transfer(t, RESOURCE_ENERGY),
-      (c, t) => c.energy > 0 && (t.structureType !== STRUCTURE_LINK || c.memory.task !== 'withdraw')
+      (c) => !c.memory.charging
     );
   }
 
@@ -180,7 +187,7 @@ class Manager {
     this.doTask(
       this.room.find<ConstructionSite>(FIND_MY_CONSTRUCTION_SITES),
       (c, t) => c.build(t),
-      (c) => c.energy > 0 && (c.energy === c.energyCapacity || c.memory.task === 'build')
+      (c) => !c.memory.charging
     );
   }
 
@@ -196,7 +203,7 @@ class Manager {
     this.doTask(
       targets,
       (c, t) => c.upgradeController(t),
-      (c) => c.energy > 0 && (c.energy === c.energyCapacity || c.memory.task === 'upgrade')
+      (c) => !c.memory.charging
     );
   }
 }
