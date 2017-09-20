@@ -6,7 +6,7 @@ import * as Profiler from 'screeps-profiler';
 import * as Config from './config/config';
 import { manageLinks } from './linkManager';
 import { spawnCreeps } from './spawner';
-import { manageTasks } from './taskManager';
+import { manageTasks } from './tasks';
 import { manageTowers } from './towerManager';
 
 log.info('Scripts bootstrapped');
