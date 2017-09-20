@@ -6,7 +6,7 @@ import * as Profiler from 'screeps-profiler';
 import * as Config from './config/config';
 import { manageLinks } from './linkManager';
 import { spawnCreeps } from './spawner';
-import { manageTasks } from './tasks';
+import { manageTasks } from './taskManager';
 import { manageTowers } from './towerManager';
 
 log.info('Scripts bootstrapped');
@@ -20,13 +20,6 @@ function mloop(): void {
   log.debug(`========== Tick #${Game.time} (${__ENV__}-${__REVISION__}, ${__BUILD_TIME__}) ==========`);
   cleanCreepMemory();
   _.each(Game.rooms, manageRoom);
-  _.each(Game.creeps, (creep) => {
-    try {
-      creep.task.run();
-    } catch (ex) {
-      creep.stopTask(`error ${ex}`);
-    }
-  });
 }
 
 function cleanCreepMemory() {
@@ -62,19 +55,6 @@ function manageRoom(room: Room) {
     log.error('during manageLinks');
     log.trace(ex);
   }
-}
-
-function displayTasks(room: Room) {
-  const names = _.map(room.myCreeps, 'name');
-  names.sort();
-  _.each(names, (name: string, i: number) => {
-    const creep = Game.creeps[name];
-    room.visual.text(`${name}(${creep.type.type}): ${creep.task}`, 0, 49 - i, {
-      align: 'left',
-      color: creep.color,
-      size: 0.6
-    });
-  });
 }
 
 /**
