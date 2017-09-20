@@ -24,13 +24,6 @@ class Manager {
     this.upgrade
   ];
 
-  private structureRefillPriority: { [type: string]: number } = {
-    [STRUCTURE_TOWER]: 40,
-    [STRUCTURE_SPAWN]: 30,
-    [STRUCTURE_EXTENSION]: 20,
-    [STRUCTURE_LINK]: 10
-  };
-
   // Main method
 
   public manage(room: Room) {
@@ -172,10 +165,15 @@ class Manager {
     );
   }
 
-  private refill() {
-    const structs = _.filter(this.room.myActiveStructures as EnergizedStructure[], (s) => s.energy < s.energyCapacity);
-    const prios = this.structureRefillPriority;
-    structs.sort((a, b) => (prios[b.structureType] || 0) - (prios[a.structureType] || 0));
+  private refill(minPrio: number = 0, maxPrio: number = Infinity) {
+    const structs = _.filter(
+      this.room.myActiveStructures as EnergizedStructure[],
+      (s) => {
+        const prio = structureRefillPriority(s.structureType);
+        return prio >= minPrio && prio < maxPrio && s.energy < s.energyCapacity;
+      }
+    );
+    structs.sort((a, b) => structureRefillPriority(b.structureType) - structureRefillPriority(a.structureType));
     this.doTask<EnergizedStructure>(
       structs,
       (c, t) => c.transfer(t, RESOURCE_ENERGY),
@@ -205,6 +203,10 @@ class Manager {
       (c, t) => c.upgradeController(t),
       (c) => !c.memory.charging
     );
+  }
+
+  private refillLowerPrio() {
+    this.refill(-Infinity, 0);
   }
 }
 
@@ -245,3 +247,13 @@ const findHarvestSpots: ((room: Room) => HarvestSpot[]) = _.memoize(
   },
   _.property('name')
 );
+
+function structureRefillPriority(type: StructureType): number {
+  switch (type) {
+    case STRUCTURE_TOWER: return 40;
+    case STRUCTURE_SPAWN: return 30;
+    case STRUCTURE_EXTENSION: return 20;
+    case STRUCTURE_LINK: return -10;
+    default: return 0;
+  }
+}
