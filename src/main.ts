@@ -4,6 +4,7 @@ import './lib/logger';
 import * as Profiler from 'screeps-profiler';
 
 import * as Config from './config/config';
+import { manageLinks } from './linkManager';
 import { spawnCreeps } from './spawner';
 import { manageTasks } from './tasks';
 import { manageTowers } from './towerManager';
@@ -56,9 +57,9 @@ function manageRoom(room: Room) {
     log.trace(ex);
   }
   try {
-    displayTasks(room);
+    manageLinks(room);
   } catch (ex) {
-    log.error('during displayTasks');
+    log.error('during manageLinks');
     log.trace(ex);
   }
 }
