@@ -19,7 +19,9 @@ const states: { [name: string]: State } = {
         return 'full';
       }
       const pos = new RoomPosition(hs.pos.x, hs.pos.y, hs.pos.roomName);
-      return resolveId(hs.id, (s: Source) => perform(c, { pos }, c.harvest(s)));
+      return resolveId(hs.id, (s: Source) =>
+        s.energy > 0 ? perform(c, { pos }, c.harvest(s)) : 'done'
+      );
     },
     transitions: doSame
   },
@@ -48,7 +50,9 @@ const states: { [name: string]: State } = {
     action: (c, id) =>
       ifNotEmpty(c, () =>
         resolveId(id, (s: EnergizedStructure) =>
-          perform(c, s, c.transfer(s, RESOURCE_ENERGY))
+          s.energy < s.energyCapacity
+            ? perform(c, s, c.transfer(s, RESOURCE_ENERGY))
+            : 'done'
         )
       ),
     transitions: doSame
@@ -66,7 +70,9 @@ const states: { [name: string]: State } = {
     action: (c, id) =>
       ifNotFull(c, () =>
         resolveId(id, (s: EnergizedStructure) =>
-          perform(c, s, c.withdraw(s, RESOURCE_ENERGY))
+          s.energy > 0
+            ? perform(c, s, c.withdraw(s, RESOURCE_ENERGY))
+            : 'done'
         )
       ),
     transitions: doSame
