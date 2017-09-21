@@ -28,25 +28,35 @@ export function findTask(creep: Creep, taskList: Task[]): Outcome {
     return 'idle';
   }
 
-  const prio = taskList[0].priority;
-  let n = 1;
-  while (n < taskList.length && taskList[n].priority === prio) {
-    n++;
+  const num = taskList.length;
+  for (let i = 0, n = 1; i < num; i += n) {
+    const prio = taskList[i].priority;
+    while (i + n < num && taskList[i + n].priority === prio) {
+      n++;
+    }
+    log.debug(`Considering task(s) ${i}-${i + n - 1}/${num}, priority: ${prio}`);
+
+    const choices = taskList.slice(i, n);
+    const task = creep.pos.findClosestByPath<Task>(choices, {filter: (t: Task) => (t.multiple || !isAssigned(t))});
+    log.debug(`Result: ${JSON.stringify(task)}`);
+
+    if (task) {
+      task.assigned = !task.multiple;
+      return { outcome: task.name, value: task.value };
+    }
   }
-  log.debug(`Considering the first ${n} task(s) of ${taskList.length} at priority ${prio}`);
 
-  const choices = taskList.slice(0, n);
-  const task = creep.pos.findClosestByPath<Task>(choices);
-  log.debug(`Result: ${JSON.stringify(task)}`);
+  return 'idle';
+}
 
-  if (!task) {
-    return 'idle';
+function isAssigned(task: Task): boolean {
+  if (typeof task.assigned === 'undefined') {
+    task.assigned = _.any(room.myCreeps, (c) => (
+      c.memory.state === task.name && _.isEqual(c.memory.value, task.value)
+    ));
   }
-
-  _.pull(taskList, task);
-  log.debug(`${taskList.length} remaining task(s)`);
-
-  return { outcome: task.name, value: task.value };
+  log.debug(`isAssigned: ${JSON.stringify(task)}`);
+  return task.assigned;
 }
 
 const findHarvestSpots = _.memoize (_findHarvestSpots, _.property('name'));
@@ -58,56 +68,66 @@ function initTasks() {
   tasks.charging = [];
   tasks.working = [];
 
-  for (const r of room.find<Resource>(FIND_DROPPED_RESOURCES)) {
-    if ( r.resourceType === RESOURCE_ENERGY) {
-      tasks.charging.push({ name: 'pickup', priority: 100, pos: r.pos, value: r.id });
-    }
-  }
-
-  for (const hs of findHarvestSpots(room)) {
-    tasks.charging.push({ name: 'harvest', priority: 90, pos: hs.pos, value: hs });
-  }
-
-  for (const s of room.find<ConstructionSite>(FIND_MY_CONSTRUCTION_SITES)) {
-    tasks.working.push({ name: 'build', priority: 100, pos: s.pos, value: s.id });
-  }
-
-  for (const s of room.myActiveStructures as EnergizedStructure[]) {
-    switch (s.structureType) {
-      case STRUCTURE_SPAWN:
-      case STRUCTURE_EXTENSION:
-        if (s.energy < s.energyCapacity) {
-          tasks.working.push({ name: 'refill', priority: 90, pos: s.pos, value: s.id });
-        }
-        break;
-
-      case STRUCTURE_TOWER:
-        if (s.energy < s.energyCapacity) {
-          tasks.working.push({ name: 'refill', priority: 80, pos: s.pos, value: s.id });
-        }
-        break;
-
-      case STRUCTURE_LINK:
-        if (s.energy > 0) {
-          tasks.charging.push({ name: 'withdraw', priority: 80, pos: s.pos, value: s.id });
-        }
-        if (s.energy < s.energyCapacity) {
-          tasks.working.push({ name: 'refill', priority: 60, pos: s.pos, value: s.id });
-        }
-        break;
-      }
-  }
-
-  const c = room.controller;
-  if (c && c.my) {
-    tasks.working.push({ name: 'upgrade', priority: 70, pos: c.pos, value: c.id });
-  }
+  listPickupTasks();
+  listHarvestTasks();
+  listConstructionTasks();
+  listStructureTasks();
 
   tasks.working.sort((a, b) => b.priority - a.priority);
   tasks.charging.sort((a, b) => b.priority - a.priority);
   log.debug(`Found ${tasks.working.length} working task(s) and ${tasks.charging.length} charging one(s)`);
 
   tasks.initialized = true;
+}
+
+function listPickupTasks() {
+  for (const r of room.find<Resource>(FIND_DROPPED_RESOURCES)) {
+    if ( r.resourceType === RESOURCE_ENERGY) {
+      tasks.charging.push({ name: 'pickup', priority: 100, pos: r.pos, value: r.id });
+    }
+  }
+}
+
+function listHarvestTasks() {
+  for (const hs of findHarvestSpots(room)) {
+    tasks.charging.push({ name: 'harvest', priority: 90, pos: hs.pos, value: hs });
+  }
+}
+
+function listConstructionTasks() {
+  for (const s of room.find<ConstructionSite>(FIND_MY_CONSTRUCTION_SITES)) {
+    tasks.working.push({ name: 'build', priority: 100, pos: s.pos, value: s.id, multiple: true });
+  }
+}
+
+const refillPrio = {
+  [STRUCTURE_TOWER]: 100,
+  [STRUCTURE_SPAWN]: 90,
+  [STRUCTURE_EXTENSION]: 90,
+  [STRUCTURE_LINK]: 60,
+  default: 10
+};
+
+function listStructureTasks() {
+  for (const s of room.myActiveStructures as EnergizedStructure[]) {
+    if (s.energyCapacity > 0 && s.energy < s.energyCapacity) {
+      const prio = refillPrio[s.structureType] || refillPrio.default;
+      tasks.working.push({ name: 'refill', pos: s.pos, priority: prio, value: s.id, multiple: true });
+    }
+
+    if (s instanceof StructureLink) {
+      if (s.energy > 0) {
+        tasks.charging.push({ name: 'withdraw', priority: 80, pos: s.pos, value: s.id });
+      }
+    }
+
+    if (s instanceof StructureController) {
+      if (s.ticksToDowngrade < 5000) {
+        tasks.working.push({ name: 'upgrade', priority: 150, pos: s.pos, value: s.id });
+      }
+      tasks.working.push({ name: 'upgrade', priority: 80, pos: s.pos, value: s.id, multiple: true });
+    }
+  }
 }
 
 // Harvesting helper

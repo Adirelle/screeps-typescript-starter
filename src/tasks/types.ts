@@ -15,6 +15,8 @@ export interface Task {
   value: any;
   pos: RoomPosition;
   priority: number;
+  assigned?: boolean;
+  multiple?: boolean;
 }
 
 export interface HarvestSpot {
