@@ -30,7 +30,6 @@ function moveByPathTo(creep: Creep, target: { pos: RoomPosition }, range: number
   }
 
   const pathInfo = PathFinder.search(creep.pos, { pos: target.pos, range }, pathFinderOpts);
-  log.debug(`PathFinder: from ${creep.pos} to ${target.pos} => ${JSON.stringify(pathInfo)}`);
   if (pathInfo.path.length === 0) {
     return ERR_NO_PATH;
   }
