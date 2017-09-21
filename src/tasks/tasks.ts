@@ -112,7 +112,7 @@ function listStructureTasks() {
   for (const s of room.myActiveStructures as EnergizedStructure[]) {
     if (s.energyCapacity > 0 && s.energy < s.energyCapacity) {
       const prio = refillPrio[s.structureType] || refillPrio.default;
-      tasks.working.push({ name: 'refill', pos: s.pos, priority: prio, value: s.id, multiple: true });
+      tasks.working.push({ name: 'refill', pos: s.pos, priority: prio, value: s.id });
     }
 
     if (s instanceof StructureLink) {
