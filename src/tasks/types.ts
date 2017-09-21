@@ -3,8 +3,10 @@ export type EnergizedStructure = Structure & EnergyContainer;
 
 export type Outcome = string | { outcome: string; value?: any };
 
+type Transitions = ((outcome: string, current: string) => string) | { [outcome: string]: string };
+
 export interface State {
-  transitions: { [outcome: string]: string };
+  transitions: Transitions;
   action(creep: Creep, value: any, state: string): Outcome;
 }
 

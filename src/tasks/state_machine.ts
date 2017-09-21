@@ -7,18 +7,11 @@ const states: { [name: string]: State } = {
       ifNotEmpty(c, () =>
         resolveId(id, (cs: ConstructionSite) => perform(c, cs, c.build(cs)))
       ),
-    transitions: {
-      empty: 'recharge',
-      moving: 'build',
-      success: 'build'
-    }
+    transitions: doSame
   },
   default: {
     action: (c) => c.isEmpty() ? 'recharge' : 'work',
-    transitions: {
-      recharge: 'recharge',
-      work: 'work'
-    }
+    transitions: _.identity
   },
   harvest: {
     action: (c, hs: HarvestSpot) => {
@@ -28,11 +21,7 @@ const states: { [name: string]: State } = {
       const pos = new RoomPosition(hs.pos.x, hs.pos.y, hs.pos.roomName);
       return resolveId(hs.id, (s: Source) => perform(c, { pos }, c.harvest(s)));
     },
-    transitions: {
-      full: 'work',
-      moving: 'harvest',
-      success: 'harvest'
-    }
+    transitions: doSame
   },
   idle: {
     action: (c) => {
@@ -42,27 +31,18 @@ const states: { [name: string]: State } = {
         return 'default';
       }
     },
-    transitions: {}
+    transitions: _.constant('default')
   },
   pickup: {
     action: (c, id) =>
       ifNotFull(c, () =>
         resolveId(id, (r: Resource) => perform(c, r, c.pickup(r)))
       ),
-    transitions: {
-      full: 'work',
-      moving: 'pickup',
-      success: 'pickup'
-    }
+    transitions: doSame
   },
   recharge: {
     action: findRechargeTask,
-    transitions: {
-      harvest: 'harvest',
-      idle: 'idle',
-      pickup: 'pickup',
-      withdraw: 'withdraw'
-    }
+    transitions: _.identity
   },
   refill: {
     action: (c, id) =>
@@ -71,10 +51,7 @@ const states: { [name: string]: State } = {
           perform(c, s, c.transfer(s, RESOURCE_ENERGY))
         )
       ),
-    transitions: {
-      empty: 'recharge',
-      moving: 'refill'
-    }
+    transitions: doSame
   },
   upgrade: {
     action: (c, id) =>
@@ -83,11 +60,7 @@ const states: { [name: string]: State } = {
           perform(c, ctl, c.upgradeController(ctl))
         )
       ),
-    transitions: {
-      empty: 'recharge',
-      moving: 'upgrade',
-      success: 'upgrade'
-    }
+    transitions: doSame
   },
   withdraw: {
     action: (c, id) =>
@@ -96,21 +69,27 @@ const states: { [name: string]: State } = {
           perform(c, s, c.withdraw(s, RESOURCE_ENERGY))
         )
       ),
-    transitions: {
-      full: 'work',
-      moving: 'withdraw'
-    }
+    transitions: doSame
   },
   work: {
     action: findWorkingTask,
-    transitions: {
-      build: 'build',
-      idle: 'idle',
-      refill: 'refill',
-      upgrade: 'upgrade'
-    }
+    transitions: _.identity
   }
 };
+
+function doSame(outcome: string, current: string): string {
+  switch (outcome) {
+    case 'full':
+      return 'work';
+    case 'empty':
+      return 'recharge';
+    case 'moving':
+    case 'success':
+      return current;
+    default:
+      return 'default';
+  }
+}
 
 function perform<T extends { pos: RoomPosition }>(
   creep: Creep,
@@ -163,7 +142,7 @@ function resolveId<T, R>(id: string, fn: (obj: T) => R): R {
 export function iterate(creep: Creep): boolean {
   const prevValue = creep.memory.value;
   const current = creep.memory.state || 'default';
-  const state = states[current];
+  const state = states[current] || states.default;
 
   let outcome: Outcome = 'failure';
   try {
@@ -180,8 +159,14 @@ export function iterate(creep: Creep): boolean {
     creep.memory.value = value;
   }
 
-  const newState = state.transitions[outcome] || 'default';
-  creep.memory.state = newState;
+  const transitions = state.transitions;
+  let newState = 'default';
+  if (typeof transitions === 'function') {
+    newState = transitions(outcome, current);
+  } else {
+    newState = transitions[outcome];
+  }
+  creep.memory.state = (newState in states) ? newState : 'default';
 
   log.debug(
     `${creep}: (${current}, ${prevValue}) => (${outcome}, ${value}) => (${creep
