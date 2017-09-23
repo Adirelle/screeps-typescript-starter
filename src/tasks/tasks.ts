@@ -82,7 +82,7 @@ function initTasks() {
 
 function listPickupTasks() {
   for (const r of room.find<Resource>(FIND_DROPPED_RESOURCES)) {
-    if ( r.resourceType === RESOURCE_ENERGY) {
+    if (r.resourceType === RESOURCE_ENERGY) {
       tasks.charging.push({ name: 'pickup', priority: 100, pos: r.pos, value: r.id });
     }
   }
@@ -115,15 +115,13 @@ function listStructureTasks() {
       tasks.working.push({ name: 'refill', pos: s.pos, priority: prio, value: s.id });
     }
 
-    if (s instanceof StructureLink) {
-      if (s.energy > 0) {
-        tasks.charging.push({ name: 'withdraw', priority: 80, pos: s.pos, value: s.id });
-      }
+    if (s.isLink() && s.energy > 0) {
+        tasks.charging.push({ name: 'withdraw', priority: 80, pos: s.pos, value: s.id, multiple: true });
     }
 
-    if (s instanceof StructureController) {
+    if (s.isController()) {
       if (s.ticksToDowngrade < 5000) {
-        tasks.working.push({ name: 'upgrade', priority: 150, pos: s.pos, value: s.id });
+        tasks.working.push({ name: 'upgrade', priority: 150, pos: s.pos, value: s.id, multiple: true });
       }
       tasks.working.push({ name: 'upgrade', priority: 80, pos: s.pos, value: s.id, multiple: true });
     }
