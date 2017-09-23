@@ -2,7 +2,7 @@
 export function manageLinks(room: Room) {
   const links = room.find<Link>(
     FIND_MY_STRUCTURES,
-    { filter: (s: Structure) => s.isActive() && s.structureType === STRUCTURE_LINK}
+    { filter: (s: Structure) => s.isActive() && s.isLink()}
   );
   links.sort((a, b) => b.energy - a.energy);
   while (links.length > 1) {

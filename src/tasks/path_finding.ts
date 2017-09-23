@@ -98,11 +98,8 @@ function canMoveTo(pos: RoomPosition): boolean {
   });
 }
 
-function isTraversableStructure(struct: Structure) {
-  return (
-    struct.structureType === STRUCTURE_ROAD
-    || (struct.structureType === STRUCTURE_RAMPART && (struct as OwnedStructure).my)
-  );
+function isTraversableStructure(s: Structure) {
+  return s.isRoad() || (s.isRampart() && s.isMine());
 }
 
 function _roomCostMatrix(name: string): CostMatrix | false {
@@ -113,11 +110,11 @@ function _roomCostMatrix(name: string): CostMatrix | false {
   log.debug('Generating cost matrix for', name);
   const costs = new PathFinder.CostMatrix();
 
-  for (const struct of room.find<OwnedStructure>(FIND_STRUCTURES)) {
-    if (struct.structureType === STRUCTURE_ROAD) {
-      costs.set(struct.pos.x, struct.pos.y, 1);
-    } else if (!isTraversableStructure(struct)) {
-      costs.set(struct.pos.x, struct.pos.y, 255);
+  for (const s of room.find<Structure>(FIND_STRUCTURES)) {
+    if (s.isRoad()) {
+      costs.set(s.pos.x, s.pos.y, 1);
+    } else if (!isTraversableStructure(s)) {
+      costs.set(s.pos.x, s.pos.y, 255);
     }
   }
 
