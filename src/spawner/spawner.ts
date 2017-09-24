@@ -6,7 +6,7 @@ interface Population {
 }
 
 export function spawnCreeps(room: Room): void {
-  const spawns = _.filter(room.myActiveStructures, (s) => s.structureType === 'spawn') as Spawn[];
+  const spawns = _.filter(room.myActiveStructures, (s) => s.isSpawn()) as Spawn[];
   const pop = countCreepsByType(room.myCreeps);
   const missing = listMissingTypes(spawns.length, pop);
   displayPop(room, pop, missing.length);
@@ -53,12 +53,12 @@ function displayPop(room: Room, pop: Population, missing: number) {
 }
 
 function spawnMissingCreeps(room: Room, missing: BodyType[], maxSize: number, spawns: Spawn[]): void {
-  const spawnCapacity = getSpawnCapacity(room);
   spawns = _.filter(spawns, (s) => !s.spawning);
   if (!spawns.length) {
     return;
   }
 
+  const spawnCapacity = getSpawnCapacity(room);
   missing.sort((a: BodyType, b: BodyType) => a.priority - b.priority);
 
   for (const spawn of spawns) {
@@ -66,12 +66,15 @@ function spawnMissingCreeps(room: Room, missing: BodyType[], maxSize: number, sp
     if (!current) {
       break;
     }
-    const size = Math.min(maxSize, Math.floor(spawnCapacity / current.bodyCost), Math.floor(50 / current.body.length));
+    let size = 0;
+    while (size < maxSize && current.getCost(size + 1) <= spawnCapacity) {
+      size++;
+    }
     if (!size) {
       log.debug(`${room}: not enough energy to spawn ${current}`);
       break;
     }
-    const body = current.sizedBody(size);
+    const body = current.getBody(size);
     const result = spawn.createCreep(body, undefined, {type: current.type});
     if (typeof result !== 'string') {
       if (result !== ERR_NOT_ENOUGH_ENERGY) {
@@ -86,10 +89,8 @@ function spawnMissingCreeps(room: Room, missing: BodyType[], maxSize: number, sp
 function getSpawnCapacity(room: Room) {
   return _.sum(
     _.map(
-      _.filter(room.myActiveStructures, (s: Structure) => (
-        s.structureType === 'spawn' || s.structureType === 'extension'
-      )),
-      (e: Structure & EnergyContainer) => e.energyCapacity
+      _.filter(room.myActiveStructures, (s: Structure) => s.isSpawn() || s.isExtension()),
+      (e: Spawn|Extension) => e.energyCapacity
     )
   );
 }
