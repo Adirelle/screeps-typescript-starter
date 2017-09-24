@@ -24,17 +24,13 @@ export function findWorkingTask(creep: Creep): Outcome {
 }
 
 export function findTask(creep: Creep, taskList: Task[]): Outcome {
-  if (!taskList.length) {
-    return 'idle';
-  }
-
   const num = taskList.length;
-  for (let i = 0, n = 1; i < num; i += n) {
+  for (let i = 0, n; i < num; i = n) {
     const prio = taskList[i].priority;
-    while (i + n < num && taskList[i + n].priority === prio) {
-      n++;
+    for (n = i + 1; n < num && taskList[n].priority === prio; n++) {
+        // Next
     }
-    log.debug(`Considering task(s) ${i}-${i + n - 1}/${num}, priority: ${prio}`);
+    log.debug(`Considering task(s) ${i}-${n - 1}/${num}, priority: ${prio}`);
 
     const choices = taskList.slice(i, n);
     const task = creep.pos.findClosestByPath<Task>(choices, {filter: (t: Task) => (t.multiple || !isAssigned(t))});
