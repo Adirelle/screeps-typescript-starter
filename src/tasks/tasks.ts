@@ -1,27 +1,183 @@
-import { HarvestSpot, Outcome, Task } from './types';
+import { BaseTask, Outcome, Task, TaskType } from './types';
 
+const tasksByType: { recharge?: Task[], work?: Task[] } = {};
 let room: Room;
-
-const tasks: {
-  charging: Task[];
-  working: Task[];
-  initialized: boolean;
-} = { charging: [], working: [], initialized: false };
+let assignations: { [name: string]: Task } = {};
 
 export function resetTasks(theRoom: Room) {
   room = theRoom;
-  tasks.initialized = false;
+  assignations = {};
+  delete tasksByType.recharge;
+  delete tasksByType.work;
 }
 
-export function findRechargeTask(creep: Creep): Outcome {
-  initTasks();
-  return findTask(creep, tasks.charging);
+export function assignTasks(): void {
+  for (const type of ['recharge', 'work'] as TaskType[]) {
+    const creeps = _.filter(room.myCreeps, (c) => c.memory.state === type);
+    if (!creeps.length) {
+      continue;
+    }
+    log.debug(`${creeps.length} creep(s) to ${type}`);
+
+    const tasks = findTasks(type);
+    if (!tasks.length) {
+      continue;
+    }
+
+    _.remove(tasks, _.property('assigned'));
+    log.debug(`${tasks.length} available task(s)`);
+    if (tasks.length) {
+      tasks.sort((a, b) => b.priority - a.priority);
+      assignTasksByType(tasks, creeps);
+    }
+  }
 }
 
-export function findWorkingTask(creep: Creep): Outcome {
-  initTasks();
-  return findTask(creep, tasks.working);
+export function getAssignedTask(creep: Creep): Outcome {
+  const task = assignations[creep.name];
+  if (!task) {
+    return 'idle';
+  }
+  log.debug(`${creep} has been assigned task ${task}`);
+  return task.toOutcome();
 }
+
+function assignTasksByType(tasks: Task[], creeps: Creep[]): void {
+  for (let i = 0, j; i < tasks.length && creeps.length > 0; i = j) {
+
+    const prio = tasks[i].priority;
+    j = i + 1;
+    while (j < tasks.length && tasks[j].priority === prio) {
+      j++;
+    }
+
+    let creep;
+    let task;
+    if (j - i > creeps.length) {
+      creep = creeps[0];
+      task = creep.pos.findClosestByPath(tasks.slice(i, j));
+    } else {
+      task = tasks[i];
+      creep = task.pos.findClosestByPath(creeps);
+    }
+    if (creep && task) {
+      log.debug(`${task} assigned to ${creep}`);
+      assignations[creep.name] = task;
+      task.assigned = true;
+      _.pull(creeps, creep);
+    }
+  }
+}
+
+function findTasks(type: TaskType): Task[] {
+  let tasks = tasksByType[type];
+  if (tasks) {
+    return tasks;
+  }
+
+  tasks =  (type === 'recharge') ? findRechargeTasks() : findWorkTasks();
+  _.remove(tasks, (t) => _.any(room.myCreeps, t.checkAssignation.bind(t)));
+
+  tasksByType[type] = tasks;
+  return tasks;
+}
+
+function findRechargeTasks(): Task[] {
+  return findPickupTasks().concat(findHarvestTasks(), findWithdrawTasks());
+}
+
+function findWorkTasks(): Task[] {
+  return findRefillTasks().concat(findBuildTasks(), findUpgradeTasks());
+}
+
+function findPickupTasks(): Task[] {
+  return _.map(
+    _.filter(room.find<Resource>(FIND_DROPPED_RESOURCES), (r) => r.resourceType === RESOURCE_ENERGY),
+    (r) => new BaseTask('pickup', r, 100)
+  );
+}
+
+// const findHarvestSpots = _.memoize(_findHarvestSpots, _.property('name'));
+
+function findHarvestTasks(): Task[] {
+  // return _.map(findHarvestSpots(room), (hs) => new BaseTask('harvest', hs, 90));
+  return _.map(
+    room.find<Source>(FIND_SOURCES, {filter: (s: Source) => s.energy > 0}),
+    (s) => new BaseTask('harvest', s, 90)
+  );
+}
+
+function findBuildTasks(): Task[] {
+  return _.map(
+    room.find<ConstructionSite>(FIND_MY_CONSTRUCTION_SITES),
+    (s) => new BaseTask('build', s, 100)
+  );
+}
+
+function findRefillTasks(): Task[] {
+  return _.map(
+    _.filter(
+      room.myActiveStructures,
+      (s) => isEnergyContainer(s) && s.energy < s.energyCapacity
+    ),
+    (s) => new BaseTask('refill', s, getRefillPriority(s.structureType))
+  );
+}
+
+function getRefillPriority(type: StructureType) {
+  switch (type) {
+    case STRUCTURE_TOWER:
+      return 100;
+    case STRUCTURE_SPAWN:
+    case STRUCTURE_EXTENSION:
+      return room.myCreeps.length < 10 ? 110 : 90;
+    case STRUCTURE_LINK:
+      return 60;
+    default:
+      return 10;
+  }
+}
+
+function findWithdrawTasks(): Task[] {
+  return _.map(
+    _.filter(room.myActiveStructures, (s) => s.isLink() && s.energy > 0),
+    (s) => new BaseTask('withdraw', s, 80)
+  );
+}
+
+function findUpgradeTasks(): Task[] {
+  const c = room.controller;
+  if (c && c.isMine()) {
+    return [new BaseTask('upgrade', c, c.ticksToDowngrade < 5000 ? 150 : 80)];
+  }
+  return [];
+}
+
+// Harvesting helper
+
+// function _findHarvestSpots(r: Room): HarvestSpot[] {
+//   const spots: HarvestSpot[] = [];
+//   _.each(r.find<Source>(FIND_SOURCES_ACTIVE), (source) => {
+//     _.each(
+//       r.lookForAtArea(
+//         LOOK_TERRAIN,
+//         source.pos.y - 1,
+//         source.pos.x - 1,
+//         source.pos.y + 1,
+//         source.pos.x + 1,
+//         true
+//       ),
+//       ({ x, y, terrain }: LookAtResultWithPos) => {
+//         if (terrain === 'swamp' || terrain === 'plain') {
+//           spots.push({ id: source.id, pos: new RoomPosition(x, y, r.name) });
+//         }
+//       }
+//     );
+//   });
+//   return spots;
+// }
+
+/*
 
 export function findTask(creep: Creep, taskList: Task[]): Outcome {
   const num = taskList.length;
@@ -54,96 +210,4 @@ function isAssigned(task: Task): boolean {
   log.debug(`isAssigned: ${JSON.stringify(task)}`);
   return task.assigned;
 }
-
-const findHarvestSpots = _.memoize (_findHarvestSpots, _.property('name'));
-
-function initTasks() {
-  if (tasks.initialized) {
-    return;
-  }
-  tasks.charging = [];
-  tasks.working = [];
-
-  listPickupTasks();
-  listHarvestTasks();
-  listConstructionTasks();
-  listStructureTasks();
-
-  tasks.working.sort((a, b) => b.priority - a.priority);
-  tasks.charging.sort((a, b) => b.priority - a.priority);
-  log.debug(`Found ${tasks.working.length} working task(s) and ${tasks.charging.length} charging one(s)`);
-
-  tasks.initialized = true;
-}
-
-function listPickupTasks() {
-  for (const r of room.find<Resource>(FIND_DROPPED_RESOURCES)) {
-    if (r.resourceType === RESOURCE_ENERGY) {
-      tasks.charging.push({ name: 'pickup', priority: 100, pos: r.pos, value: r.id });
-    }
-  }
-}
-
-function listHarvestTasks() {
-  for (const hs of findHarvestSpots(room)) {
-    tasks.charging.push({ name: 'harvest', priority: 90, pos: hs.pos, value: hs });
-  }
-}
-
-function listConstructionTasks() {
-  for (const s of room.find<ConstructionSite>(FIND_MY_CONSTRUCTION_SITES)) {
-    tasks.working.push({ name: 'build', priority: 100, pos: s.pos, value: s.id, multiple: true });
-  }
-}
-
-const refillPrio = {
-  [STRUCTURE_TOWER]: 100,
-  [STRUCTURE_SPAWN]: 90,
-  [STRUCTURE_EXTENSION]: 90,
-  [STRUCTURE_LINK]: 60,
-  default: 10
-};
-
-function listStructureTasks() {
-  for (const s of room.myActiveStructures) {
-    if (isEnergyContainer(s) && s.energy < s.energyCapacity) {
-      const prio = refillPrio[s.structureType] || refillPrio.default;
-      tasks.working.push({ name: 'refill', pos: s.pos, priority: prio, value: s.id });
-    }
-
-    if (s.isLink() && s.energy > 0) {
-        tasks.charging.push({ name: 'withdraw', priority: 80, pos: s.pos, value: s.id, multiple: true });
-    }
-
-    if (s.isController()) {
-      if (s.ticksToDowngrade < 5000) {
-        tasks.working.push({ name: 'upgrade', priority: 150, pos: s.pos, value: s.id, multiple: true });
-      }
-      tasks.working.push({ name: 'upgrade', priority: 80, pos: s.pos, value: s.id, multiple: true });
-    }
-  }
-}
-
-// Harvesting helper
-
-function _findHarvestSpots(r: Room): HarvestSpot[] {
-  const spots: HarvestSpot[] = [];
-  _.each(r.find<Source>(FIND_SOURCES_ACTIVE), (source) => {
-    _.each(
-      r.lookForAtArea(
-        LOOK_TERRAIN,
-        source.pos.y - 1,
-        source.pos.x - 1,
-        source.pos.y + 1,
-        source.pos.x + 1,
-        true
-      ),
-      ({ x, y, terrain }: LookAtResultWithPos) => {
-        if (terrain === 'swamp' || terrain === 'plain') {
-          spots.push({ id: source.id, pos: new RoomPosition(x, y, r.name) });
-        }
-      }
-    );
-  });
-  return spots;
-}
+*/

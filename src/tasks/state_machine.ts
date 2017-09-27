@@ -1,6 +1,6 @@
 import { moveTo } from './path_finding';
-import { findRechargeTask, findWorkingTask } from './tasks';
-import { EnergizedStructure, HarvestSpot, Outcome, State } from './types';
+import { getAssignedTask } from './tasks';
+import { EnergizedStructure, Outcome, State } from './types';
 
 const states: { [name: string]: State } = {
   build: {
@@ -15,15 +15,14 @@ const states: { [name: string]: State } = {
     transitions: _.identity
   },
   harvest: {
-    action: (c, hs: HarvestSpot) => {
+    action: (c, t) => {
       if (c.isFull()) {
         return 'full';
       }
-      const pos = new RoomPosition(hs.pos.x, hs.pos.y, hs.pos.roomName);
       return resolveId(
-        hs.id,
+        t,
         (s: Source) =>
-          s.energy > 0 ? perform(c, { pos }, 0, c.harvest(s)) : 'done'
+          s.energy > 0 ? perform(c, s, 1, c.harvest(s)) : 'done'
       );
     },
     transitions: doSame
@@ -46,7 +45,7 @@ const states: { [name: string]: State } = {
     transitions: doSame
   },
   recharge: {
-    action: findRechargeTask,
+    action: getAssignedTask,
     transitions: _.identity
   },
   refill: {
@@ -85,7 +84,7 @@ const states: { [name: string]: State } = {
     transitions: doSame
   },
   work: {
-    action: findWorkingTask,
+    action: getAssignedTask,
     transitions: _.identity
   }
 };
