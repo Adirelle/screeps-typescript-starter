@@ -145,6 +145,7 @@ function perform<T extends { pos: RoomPosition }>(
   range: number,
   result: ResultCode
 ): Outcome {
+  addActionVisual(creep, target);
   if (result === ERR_NOT_IN_RANGE) {
     result = creep.moveToGoal(target, range);
     if (result === OK || result === ERR_TIRED) {
@@ -157,12 +158,19 @@ function perform<T extends { pos: RoomPosition }>(
     case ERR_NOT_ENOUGH_ENERGY:
     case ERR_NOT_ENOUGH_RESOURCES:
       return 'empty';
-    case ERR_TIRED:
     case OK:
       return 'success';
     default:
       return 'failure';
   }
+}
+
+function addActionVisual<T extends { pos: RoomPosition }>(creep: Creep, target: T): void {
+  const room = Game.rooms[target.pos.roomName]!;
+  room.visual.circle(
+    target.pos.x, target.pos.y,
+    { fill: 'transparent', opacity: 0.7, stroke: creep.color, strokeWidth: 0.1, radius: 0.4 }
+  );
 }
 
 function ifNotEmpty(creep: Creep, fn: () => Outcome): Outcome {
