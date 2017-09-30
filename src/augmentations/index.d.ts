@@ -24,6 +24,8 @@ interface RoomPosition {
 }
 
 interface Structure {
+  isTraversable(): boolean;
+
   isMine(): this is OwnedStructure;
   isHostile(): this is OwnedStructure;
 

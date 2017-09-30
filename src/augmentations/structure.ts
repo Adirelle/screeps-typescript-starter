@@ -55,3 +55,15 @@ Structure.prototype.isStorage = structTypeGuard(STRUCTURE_STORAGE);
 Structure.prototype.isTerminal = structTypeGuard(STRUCTURE_TERMINAL);
 Structure.prototype.isTower = structTypeGuard(STRUCTURE_TOWER);
 Structure.prototype.isWall = structTypeGuard(STRUCTURE_WALL);
+
+Structure.prototype.isTraversable = function(this: Structure): boolean {
+  switch (this.structureType) {
+    case STRUCTURE_ROAD:
+      return true;
+    case STRUCTURE_RAMPART:
+    case STRUCTURE_CONTAINER:
+      return this.isMine();
+    default:
+      return false;
+  }
+};
