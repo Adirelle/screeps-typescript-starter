@@ -146,7 +146,7 @@ function perform<T extends { pos: RoomPosition }>(
   result: ResultCode
 ): Outcome {
   if (result === ERR_NOT_IN_RANGE) {
-    result = creep.moveToGoal({pos: target, range});
+    result = creep.moveToGoal(target, range);
     if (result === OK || result === ERR_TIRED) {
       return 'moving';
     }

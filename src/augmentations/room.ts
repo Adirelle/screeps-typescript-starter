@@ -8,12 +8,14 @@ Object.defineProperties(Room.prototype, {
         return costs;
       }
       const mem = this.memory._costMatrix;
-      if (mem && mem.expiresAt < Game.time) {
+      if (mem && mem.expiresAt > Game.time) {
         costs = PathFinder.CostMatrix.deserialize(mem.matrix);
-      } else {
+      }
+      if (!costs) {
         costs = buildCostMatrix(this);
         this.memory._costMatrix = { matrix: costs.serialize(), expiresAt: Game.time + 2 };
       }
+      this._costMatrix = costs;
       return costs;
     }
   },
@@ -57,6 +59,7 @@ Room.prototype.toString = function(this: Room): string {
 };
 
 function buildCostMatrix(room: Room): CostMatrix {
+  log.debug(`Building cost matrix for ${room}`);
   const costs = new PathFinder.CostMatrix();
 
   for (const s of room.find<Structure>(FIND_STRUCTURES)) {

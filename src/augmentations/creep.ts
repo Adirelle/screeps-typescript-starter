@@ -81,8 +81,9 @@ function moveToGoal(creep: Creep, pos: RoomPosition, range: number): ResultCode 
 }
 
 interface Path {
-  pos: RoomPosition;
-  steps: RoomPosition[];
+  roomName: string;
+  target: { x: number, y: number };
+  steps: Array<[number, number]>;
 }
 
 function moveByPathTo(creep: Creep, pos: RoomPosition, range: number): ResultCode {
@@ -97,16 +98,27 @@ function moveByPathTo(creep: Creep, pos: RoomPosition, range: number): ResultCod
     delete creep.memory.path;
   }
 
-  const pathInfo = PathFinder.search(creep.pos, { pos, range }, {
-    plainCost: 2,
-    roomCallback: (name) => Game.rooms[name].costMatrix,
-    swampCost: 10
-  });
+  const pathInfo = PathFinder.search(
+    creep.pos,
+    { pos, range },
+    {
+      maxCost: 2000,
+      maxRooms: 1,
+      plainCost: 2,
+      roomCallback: getRoomCostMatrix,
+      swampCost: 10
+    }
+  );
   if (pathInfo.path.length === 0) {
+    log.debug(`_moveByPathTo: could not find path to (${pos},${range})`);
     return ERR_NO_PATH;
   }
 
-  path = { pos, steps: pathInfo.path };
+  path = {
+    roomName: pos.roomName,
+    steps: _.map(pathInfo.path, ({x, y}) => [x, y] as [number, number]),
+    target: { x: pos.x, y: pos.y }
+  };
   result = tryPath(creep, pos, path);
   if (result === OK || result === ERR_TIRED) {
     creep.memory.path = path;
@@ -114,36 +126,55 @@ function moveByPathTo(creep: Creep, pos: RoomPosition, range: number): ResultCod
   return result;
 }
 
-function tryPath(creep: Creep, pos: RoomPosition, path: Path): ResultCode {
-  if (!pos.isEqualTo(path.pos.x, path.pos.y)) {
+function getRoomCostMatrix(name: string): CostMatrix|boolean {
+  const room = Game.rooms[name];
+  if (!room) {
+    return false;
+  }
+  return room.costMatrix;
+}
+
+function tryPath(creep: Creep, pos: RoomPosition, { target, steps, roomName }: Path): ResultCode {
+  if (!pos.isEqualTo(target.x, target.y)) {
     return ERR_NOT_FOUND;
   }
-  const steps = path.steps;
   const n = steps.length;
+  addPathVisual(creep, steps);
   for (let i = 0; i < n; i++) {
-    const result = moveOneTo(creep, steps[i]!);
+    const [x, y] = steps[i]!;
+    const result = moveOneTo(creep, new RoomPosition(x, y, roomName));
     if (result === OK || result === ERR_TIRED) {
-      steps.splice(0, i + (result === OK ? 1 : 0));
-      creep.room.visual.poly(
-        _.map(steps, ({x, y}) => [x, y] as [number, number]),
-        {
-          lineStyle: 'dotted',
-          opacity: 0.7,
-          stroke: creep.color,
-          strokeWidth: 0.1
-        }
-      );
+      if (result === OK) {
+        i++;
+      }
+      steps.splice(0, i);
       return result;
     }
   }
   return ERR_NOT_FOUND;
 }
 
+function addPathVisual(creep: Creep, steps: Array<[number, number]>): void {
+  creep.room.visual.poly(
+    steps,
+    {
+      lineStyle: 'dotted',
+      opacity: 0.7,
+      stroke: creep.color,
+      strokeWidth: 0.1
+    }
+  );
+}
+
 function moveOneTo(creep: Creep, pos: RoomPosition): ResultCode {
+  if (creep.pos.isEqualTo(pos)) {
+    return OK;
+  }
   if (!creep.pos.isNearTo(pos)) {
     return ERR_NOT_FOUND;
   }
-  if (canMoveTo(pos)) {
+  if (!canMoveTo(pos)) {
+    log.debug(`_moveOneTo: no space on ${pos} for ${creep}${creep.pos}`);
     return ERR_NO_PATH;
   }
   return creep.move(creep.pos.getDirectionTo(pos));
