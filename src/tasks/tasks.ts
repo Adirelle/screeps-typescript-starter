@@ -39,6 +39,7 @@ export function getAssignedTask(creep: Creep): Outcome {
     return 'idle';
   }
   log.debug(`${creep} has been assigned task ${task}`);
+  creep.say(task.name);
   return task.toOutcome();
 }
 
