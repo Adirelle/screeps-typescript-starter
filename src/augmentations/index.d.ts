@@ -16,6 +16,7 @@ interface Room {
   readonly myCreeps: Creep[];
   readonly myStructures: Structure[];
   readonly myActiveStructures: Structure[];
+  readonly costMatrix: CostMatrix;
   toString(): string;
 }
 
