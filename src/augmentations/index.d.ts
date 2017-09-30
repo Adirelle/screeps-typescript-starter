@@ -1,9 +1,21 @@
 
+
 interface Creep extends EnergyContainer {
   readonly color: string;
   readonly payload: number;
   isEmpty(): boolean;
   isFull(): boolean;
+
+  canMoveTo(x: number, y: number, roomName?: string): boolean;
+  canMoveTo(pos: RoomPosition): boolean;
+
+  moveOneTo(x: number, y: number, roomName?: string): ResultCode;
+  moveOneTo(pos: RoomPosition): ResultCode;
+
+  moveToGoal(x: number, y: number, range?: number, roomName?: string): ResultCode;
+  moveToGoal(pos: RoomPosition, range?: number): ResultCode;
+  moveToGoal(goal: { pos: RoomPosition }, range?: number): ResultCode;
+  moveToGoal(goal: { pos: RoomPosition, range?: number }): ResultCode;
 }
 
 declare namespace NodeJS {

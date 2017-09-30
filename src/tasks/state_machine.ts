@@ -1,4 +1,3 @@
-import { moveTo } from './path_finding';
 import { getAssignedTask } from './tasks';
 import { EnergizedStructure, Outcome, State } from './types';
 
@@ -147,7 +146,7 @@ function perform<T extends { pos: RoomPosition }>(
   result: ResultCode
 ): Outcome {
   if (result === ERR_NOT_IN_RANGE) {
-    result = moveTo(creep, target, range);
+    result = creep.moveToGoal({pos: target, range});
     if (result === OK || result === ERR_TIRED) {
       return 'moving';
     }
